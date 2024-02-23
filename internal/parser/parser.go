@@ -19,7 +19,6 @@ package parser
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -57,18 +56,13 @@ func parseColonDocuments(r io.Reader) ([]map[string]string, error) {
 		cur[parts[0]] = parts[1]
 	}
 	if scanner.Err() != nil {
-		if errors.Is(scanner.Err(), io.EOF) {
-			// Last entry, if cur is not empty (already had a newline?) append
-			// it.
-			if len(cur) > 0 {
-				out = append(out, cur)
-			}
-			return out, nil
-		}
-
 		return nil, scanner.Err()
 	}
 
+	// If we ended with a non-empty document, append it to the output now.
+	if len(cur) > 0 {
+		out = append(out, cur)
+	}
 	return out, nil
 }
 
@@ -153,6 +147,7 @@ func (pkg *Package) EncodeInto(w io.Writer) error {
 	return nil
 }
 
+// ParsePackages parses the provided reader into a slice of packages.
 func ParsePackages(r io.Reader) (Packages, error) {
 	docs, err := parseColonDocuments(r)
 	if err != nil {
@@ -202,13 +197,12 @@ func ParsePackages(r io.Reader) (Packages, error) {
 
 			// Remove the field from the map so we can check for missing
 			// fields later.
-			delete(tagToField, k)
-
+			delete(doc, k)
 		}
 
 		// Check for missing fields
-		if len(tagToField) > 0 {
-			return nil, fmt.Errorf("unknown fields: %v", tagToField)
+		if len(doc) > 0 {
+			return nil, fmt.Errorf("unknown fields: %v", doc)
 		}
 
 		pkgs = append(pkgs, pkg)

@@ -1,2 +1,18 @@
 [tools]
 golang = "1.22"
+golangci-lint = "1.56.2"
+"go:gotest.tools/gotestsum" = "v1.11.0"
+"go:golang.org/x/tools/cmd/goimports" = "latest"
+
+[tasks.tests]
+description = "Run tests"
+run = ["gotestsum", "golangci-lint run --allow-parallel-runners --fast"]
+
+[tasks.fmt]
+alias = "format"
+description = "Format code"
+run = ["goimports -w ."]
+
+[tasks.build]
+description = "Build the project"
+run = ["go mod download", "go build -trimpath -o bin/ ./cmd/..."]
