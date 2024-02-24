@@ -17,7 +17,32 @@
 // README in the root of the repository for more information.
 package main
 
+import (
+	"fmt"
+	"net/http"
+	"os"
+
+	"github.com/jaredallard/binhost/internal/parser"
+)
+
 // main runs the binhost server.
 func main() {
+	req, err := http.NewRequest("GET", "https://gentoo.rgst.io/t/arm64/asahi/Packages", nil)
+	if err != nil {
+		panic(err)
+	}
 
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	defer resp.Body.Close()
+
+	pkgs, err := parser.ParsePackages(resp.Body)
+	if err != nil {
+		panic(fmt.Errorf("failed to parse packages: %w", err))
+	}
+
+	pkgs.EncodeInto(os.Stdout)
 }

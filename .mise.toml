@@ -5,6 +5,7 @@ golangci-lint = "1.56.2"
 "go:golang.org/x/tools/cmd/goimports" = "latest"
 
 [tasks.tests]
+alias = "test"
 description = "Run tests"
 run = ["gotestsum", "golangci-lint run --allow-parallel-runners --fast"]
 

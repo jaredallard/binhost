@@ -16,15 +16,30 @@ func TestCanEncodeAPackage(t *testing.T) {
 
 	var buf bytes.Buffer
 	assert.NilError(t, pkg.EncodeInto(&buf))
-	assert.Equal(t, "CPV: x11-terms/alacritty-0.12.3\n", buf.String())
+	assert.Equal(t, "CPV: x11-terms/alacritty-0.12.3\n\n", buf.String())
 }
 
-// TODO: Implement this.
 func TestCanReadPackages(t *testing.T) {
-	input := `CPV: x11-terms/alacritty-0.12.3` + "\n"
+	input := `ARCH: arm64` + "\n" + "\n" + `CPV: x11-terms/alacritty-0.12.3` + "\n"
 
-	pkgs, err := parser.ParsePackages(strings.NewReader(input))
+	index, err := parser.ParsePackages(strings.NewReader(input))
 	assert.NilError(t, err)
-	assert.Equal(t, 1, len(pkgs))
-	assert.Equal(t, "x11-terms/alacritty-0.12.3", pkgs[0].CPV)
+	assert.Equal(t, 1, len(index.PackageEntries))
+	assert.Equal(t, "arm64", index.Arch)
+	assert.Equal(t, "x11-terms/alacritty-0.12.3", index.PackageEntries[0].CPV)
+}
+
+func TestCanEncodePackages(t *testing.T) {
+	index := parser.Index{
+		Arch: "arm64",
+		PackageEntries: []parser.Package{
+			{
+				CPV: "x11-terms/alacritty-0.12.3",
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	assert.NilError(t, index.EncodeInto(&buf))
+	assert.Equal(t, "ARCH: arm64\n\nCPV: x11-terms/alacritty-0.12.3\n\n", buf.String())
 }
