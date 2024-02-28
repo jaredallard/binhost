@@ -12,7 +12,7 @@ run = ["gotestsum", "golangci-lint run --allow-parallel-runners --fast"]
 [tasks.fmt]
 alias = "format"
 description = "Format code"
-run = ["goimports -w ."]
+run = ["goimports -w .", "go mod tidy"]
 
 [tasks.build]
 description = "Build the project"
