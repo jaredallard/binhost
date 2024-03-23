@@ -24,17 +24,17 @@ import (
 	"path/filepath"
 )
 
-// _ ensures that TarExtractor implements the Extractor interface.
-var _ Extractor = (&TarExtractor{})
+// _ ensures that tarExtractor implements the Extractor interface.
+var _ Extractor = (&tarExtractor{})
 
 // TarExtractor implements the Extractor interface for tar archives.
-type TarExtractor struct{}
+type tarExtractor struct{}
 
-func (t *TarExtractor) Extensions() []string {
+func (t *tarExtractor) Extensions() []string {
 	return []string{"tar", "tgz", "tar.gz", "tar.xz", "txz", "tar.bz2"}
 }
 
-func (t *TarExtractor) Extract(r io.Reader, ext, dest string) error {
+func (t *tarExtractor) Extract(r io.Reader, ext, dest string) error {
 	var container io.ReadCloser
 	switch ext {
 	case "tar":
