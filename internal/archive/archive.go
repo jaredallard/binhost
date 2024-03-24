@@ -20,6 +20,7 @@ package archive
 import (
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -27,7 +28,7 @@ import (
 // Configures extractors supported by this package and values
 // initialized by the init function.
 var (
-	extractors = []Extractor{}
+	extractors = []Extractor{&tarExtractor{}}
 	extensions = map[string]Extractor{}
 )
 
@@ -63,7 +64,11 @@ func Extract(opts ExtractOptions, dest string) error {
 		return fmt.Errorf("either reader or path must be provided")
 	}
 
-	ext := strings.TrimPrefix(opts.Extension, ".")
+	if opts.Reader != nil && opts.Path != "" {
+		return fmt.Errorf("only one of reader or path can be provided")
+	}
+
+	ext := opts.Extension
 	if opts.Reader != nil {
 		if ext == "" {
 			return fmt.Errorf("extension must be provided when using a reader (set opts.Extension)")
@@ -71,6 +76,18 @@ func Extract(opts ExtractOptions, dest string) error {
 	} else if opts.Path != "" && ext == "" {
 		// If not set, default to the extension of the provided path.
 		ext = filepath.Ext(opts.Path)
+	}
+	ext = strings.TrimPrefix(ext, ".")
+
+	// Read the file from disk if Path is provided.
+	if opts.Path != "" {
+		r, err := os.Open(opts.Path)
+		if err != nil {
+			return fmt.Errorf("failed to open archive: %w", err)
+		}
+		defer r.Close()
+
+		opts.Reader = r
 	}
 
 	for eext, extractor := range extensions {

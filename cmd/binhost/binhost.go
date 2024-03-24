@@ -19,30 +19,24 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 
-	"github.com/jaredallard/binhost/internal/parser"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/jaredallard/binhost/internal/packages"
 )
 
 // main runs the binhost server.
 func main() {
-	req, err := http.NewRequest("GET", "https://gentoo.rgst.io/t/arm64/asahi/Packages", nil)
+	f, err := os.Open("onepassword-cli-0-1.gpkg.tar")
+	if err != nil {
+		fmt.Println("failed to open file:", err)
+		os.Exit(1)
+	}
+
+	pkg, err := packages.New(f)
 	if err != nil {
 		panic(err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		panic(err)
-	}
-
-	defer resp.Body.Close()
-
-	pkgs, err := parser.ParsePackages(resp.Body)
-	if err != nil {
-		panic(fmt.Errorf("failed to parse packages: %w", err))
-	}
-
-	pkgs.EncodeInto(os.Stdout)
+	spew.Dump(pkg)
 }

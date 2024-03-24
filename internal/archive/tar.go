@@ -31,7 +31,7 @@ var _ Extractor = (&tarExtractor{})
 type tarExtractor struct{}
 
 func (t *tarExtractor) Extensions() []string {
-	return []string{"tar", "tgz", "tar.gz", "tar.xz", "txz", "tar.bz2"}
+	return []string{"tar", "tgz", "gz", "xz", "tbz2", "bz2"}
 }
 
 func (t *tarExtractor) Extract(r io.Reader, ext, dest string) error {
@@ -39,15 +39,15 @@ func (t *tarExtractor) Extract(r io.Reader, ext, dest string) error {
 	switch ext {
 	case "tar":
 		container = io.NopCloser(r)
-	case "tgz", "tar.gz":
+	case "tgz", "gz":
 		var err error
 		container, err = newGzipReader(r)
 		if err != nil {
 			return fmt.Errorf("failed to create gzip reader: %w", err)
 		}
-	case "tar.bz2":
+	case "tbz2", "bz2":
 		container = newBzip2Reader(r)
-	case "tar.xz", "txz":
+	case "xz":
 		container = newXZReader(r)
 	default:
 		// This only happens if we're missing a case in the switch statement.
@@ -69,10 +69,15 @@ func (t *tarExtractor) Extract(r io.Reader, ext, dest string) error {
 		path := filepath.Join(dest, h.Name)
 		switch h.Typeflag {
 		case tar.TypeDir:
-			if err := os.MkdirAll(path, 0755); err != nil {
+			if err := os.MkdirAll(path, h.FileInfo().Mode()); err != nil {
 				return fmt.Errorf("failed to create directory: %w", err)
 			}
 		case tar.TypeReg:
+			// Sometimes the directory entry is missing, so we need to create it.
+			if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+				return fmt.Errorf("failed to create directory: %w", err)
+			}
+
 			f, err := os.Create(path)
 			if err != nil {
 				return fmt.Errorf("failed to create file: %w", err)

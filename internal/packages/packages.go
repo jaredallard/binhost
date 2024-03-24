@@ -21,17 +21,19 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/jaredallard/binhost/internal/archive"
 )
 
 // supportedCompressionExtensions is a list of supported compression
 // extensions that this package can handle.
-var supportedCompressionExtensions = []string{"xz", "gz"}
+var supportedCompressionExtensions = []string{"xz", "gz", "bz2"}
 
 // Package represents a Gentoo gpkg (xpkg is not supported).
 type Package struct {
-	// Name is the name of the package.
+	// Metadata contains package fields from a metadata.tar of a gpkg.
+	Metadata
 
 	// Fields below are populated from the extracted contents of the gpkg.
 
@@ -39,6 +41,32 @@ type Package struct {
 	imagePath string
 	// metadataPath contains the path on disk to the extracted metadata archive.
 	metadataPath string
+}
+
+// Metadata is the representation of a metadata.tar from a gpkg.
+type Metadata struct {
+	BuildID       string
+	BuildTime     string
+	Category      string
+	CBuild        string
+	CFlags        string
+	CHost         string
+	CXXFlags      string
+	DefinedPhases string
+	Description   string
+	EAPI          string
+	Features      string
+	Inherited     string
+	IUSE          string
+	IUSEEffective string
+	Keywords      string
+	LDFLAGS       string
+	License       string
+	PF            string
+	Repository    string
+	Size          string
+	Slot          string
+	USE           string
 }
 
 // New creates a new Package from the provided [io.ReadCloser]. The
@@ -68,6 +96,39 @@ func New(r io.ReadCloser) (*Package, error) {
 		return nil, fmt.Errorf("failed to extract gpkg: %w", err)
 	}
 
+	// Move te files out of the sub dir by finding the first dir in the
+	// temp dir.
+	contents, err := os.ReadDir(tmpDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read temporary directory: %w", err)
+	}
+
+	var subDir string
+	for _, f := range contents {
+		if f.IsDir() {
+			subDir = f.Name()
+			break
+		}
+	}
+	// If there's no sub dir, optimistically assume the contents are at
+	// the root.
+	if subDir != "" {
+		contents, err := os.ReadDir(filepath.Join(tmpDir, subDir))
+		if err != nil {
+			return nil, fmt.Errorf("failed to read temp directory sub dir: %w", err)
+		}
+
+		for _, f := range contents {
+			if err := os.Rename(filepath.Join(tmpDir, subDir, f.Name()), filepath.Join(tmpDir, f.Name())); err != nil {
+				return nil, fmt.Errorf("failed to move file out of sub dir: %w", err)
+			}
+		}
+
+		if err := os.Remove(filepath.Join(tmpDir, subDir)); err != nil {
+			return nil, fmt.Errorf("failed to remove sub dir: %w", err)
+		}
+	}
+
 	p, err := packageFromDir(tmpDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create package from extracted contents: %w", err)
@@ -75,6 +136,48 @@ func New(r io.ReadCloser) (*Package, error) {
 
 	keepTempDir = true
 	return p, nil
+}
+
+// metadataFromDir creates a package manifest out of the contents of an
+// extracted manifest.tar file.
+func metadataFromDir(dir string) (*Metadata, error) {
+	md := &Metadata{}
+
+	filesToFields := map[string]*string{
+		"BUILD_ID":       &md.BuildID,
+		"BUILD_TIME":     &md.BuildTime,
+		"CATEGORY":       &md.Category,
+		"CBUILD":         &md.CBuild,
+		"CFLAGS":         &md.CFlags,
+		"CHOST":          &md.CHost,
+		"CXXFLAGS":       &md.CXXFlags,
+		"DEFINED_PHASES": &md.DefinedPhases,
+		"DESCRIPTION":    &md.Description,
+		"EAPI":           &md.EAPI,
+		"FEATURES":       &md.Features,
+		"INHERITED":      &md.Inherited,
+		"IUSE":           &md.IUSE,
+		"IUSE_EFFECTIVE": &md.IUSEEffective,
+		"KEYWORDS":       &md.Keywords,
+		"LDFLAGS":        &md.LDFLAGS,
+		"LICENSE":        &md.License,
+		"PF":             &md.PF,
+		"repository":     &md.Repository,
+		"SIZE":           &md.Size,
+		"SLOT":           &md.Slot,
+		"USE":            &md.USE,
+	}
+
+	for file, field := range filesToFields {
+		data, err := os.ReadFile(filepath.Join(dir, file))
+		if err != nil {
+			return nil, fmt.Errorf("failed to read file %s: %w", file, err)
+		}
+
+		*field = strings.TrimSuffix(string(data), "\n")
+	}
+
+	return md, nil
 }
 
 // packageFromDir creates a Package from the extracted contents of a
@@ -90,25 +193,44 @@ func packageFromDir(dir string) (*Package, error) {
 		}
 	}
 
-	archives := make(map[string]string)
 	for _, name := range expectedArchives {
+		var found bool
 		for _, ext := range supportedCompressionExtensions {
 			archiveName := name + ".tar." + ext
-			if _, err := os.Stat(filepath.Join(dir, archiveName)); err == nil {
-				archives[name] = archiveName
-				break
+			if _, err := os.Stat(filepath.Join(dir, archiveName)); err != nil {
+				continue
 			}
+			found = true
 
 			// Extract the archive
 			if err := archive.Extract(archive.ExtractOptions{
-				Path: filepath.Join(dir, archiveName)}, filepath.Join(dir, name),
+				Path: filepath.Join(dir, archiveName)}, dir,
 			); err != nil {
 				return nil, fmt.Errorf("failed to extract archive %s: %w", archiveName, err)
 			}
+
+			// Ensure we extracted to a directory with the same name as the archive.
+			if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+				return nil, fmt.Errorf("failed to extract archive %s: %w", archiveName, err)
+			}
+
+			// We're done.
+			break
 		}
-		if _, ok := archives[name]; !ok {
+		if !found {
 			return nil, fmt.Errorf("package missing required archive: %s", name)
 		}
 	}
 
+	mf, err := metadataFromDir(filepath.Join(dir, "metadata"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create manifest from directory: %w", err)
+	}
+
+	// Create manifest from the extracted manifest.
+	return &Package{
+		Metadata:     *mf,
+		imagePath:    filepath.Join(dir, "image"),
+		metadataPath: filepath.Join(dir, "metadata"),
+	}, nil
 }
