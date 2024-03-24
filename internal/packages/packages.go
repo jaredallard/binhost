@@ -37,10 +37,13 @@ type Package struct {
 
 	// Fields below are populated from the extracted contents of the gpkg.
 
-	// imagePath contains the path on disk to the extracted image archive.
-	imagePath string
-	// metadataPath contains the path on disk to the extracted metadata archive.
-	metadataPath string
+	// path is the path to the extracted gpkg on disk.
+	path string
+}
+
+// Delete removes the package from disk.
+func (p *Package) Delete() error {
+	return os.RemoveAll(p.path)
 }
 
 // Metadata is the representation of a metadata.tar from a gpkg.
@@ -75,7 +78,7 @@ type Metadata struct {
 //
 // The package will be stored on disk in a temporary directory due to
 // the nature of gpkgs being usually a large tarball.
-func New(r io.ReadCloser) (*Package, error) {
+func New(r io.Reader) (*Package, error) {
 	tmpDir, err := os.MkdirTemp("", "binhost-extract-")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temporary directory: %w", err)
@@ -133,6 +136,7 @@ func New(r io.ReadCloser) (*Package, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create package from extracted contents: %w", err)
 	}
+	p.path = tmpDir
 
 	keepTempDir = true
 	return p, nil
@@ -183,6 +187,8 @@ func metadataFromDir(dir string) (*Metadata, error) {
 // packageFromDir creates a Package from the extracted contents of a
 // gpkg tar. The supplied directory's Manifest is used to validate the
 // contents of the package.
+//
+// TODO(jaredallard): We don't currently validate the Manifest.
 func packageFromDir(dir string) (*Package, error) {
 	expectedFiles := []string{"Manifest", "gpkg-1"}
 	expectedArchives := []string{"image", "metadata"}
@@ -229,8 +235,6 @@ func packageFromDir(dir string) (*Package, error) {
 
 	// Create manifest from the extracted manifest.
 	return &Package{
-		Metadata:     *mf,
-		imagePath:    filepath.Join(dir, "image"),
-		metadataPath: filepath.Join(dir, "metadata"),
+		Metadata: *mf,
 	}, nil
 }

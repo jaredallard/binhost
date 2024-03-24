@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: on-failure
+    shm_size: 128mb
+    ports:
+      - "5432:5432/tcp"
+    environment:
+      POSTGRES_PASSWORD: supersecretpassword
+      # Create DB
+      POSTGRES_DB: binhost
+
+  s3:
+    image: minio/minio
+    restart: on-failure
+    ports:
+      - "9000:9000/tcp"
+      - "9001:9001/tcp"
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    entrypoint:
+      - /usr/bin/env
+      - sh
+      - -c
+    command:
+      - |-
+        # Create the binhost bucket
+        mkdir -vp /data/binhost
+        exec /usr/bin/docker-entrypoint.sh server /data --console-address ":9001"

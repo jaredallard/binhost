@@ -18,25 +18,40 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"os/signal"
+
+	"log/slog"
 	"os"
 
-	"github.com/davecgh/go-spew/spew"
-	"github.com/jaredallard/binhost/internal/packages"
+	charmlog "github.com/charmbracelet/log"
+
+	_ "github.com/jackc/pgx/v5/stdlib" // Used by ent.
+
+	"github.com/jaredallard/binhost/internal/dpi"
+	"github.com/jaredallard/binhost/internal/server"
 )
 
 // main runs the binhost server.
 func main() {
-	f, err := os.Open("onepassword-cli-0-1.gpkg.tar")
+	handler := charmlog.New(os.Stderr)
+	log := slog.New(handler)
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	defer log.Info("shutting down")
+
+	deps, err := dpi.New(ctx, log)
 	if err != nil {
-		fmt.Println("failed to open file:", err)
+		log.With("error", err).Error("failed to create dependencies")
 		os.Exit(1)
 	}
+	defer deps.DB.Close()
 
-	pkg, err := packages.New(f)
-	if err != nil {
-		panic(err)
+	log.Info("starting server")
+	if err := server.New(deps).Run(ctx); err != nil {
+		log.With("error", err).Error("failed to run server")
+		os.Exit(1)
 	}
-
-	spew.Dump(pkg)
 }

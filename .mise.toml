@@ -15,5 +15,13 @@ description = "Format code"
 run = ["goimports -w .", "go mod tidy"]
 
 [tasks.build]
+alias = "default"
 description = "Build the project"
+sources = ["cmd/**/*.go", "internal/**/*.go", "go.mod", "go.sum"]
+outputs = ["bin/binhost"]
 run = ["go mod download", "go build -trimpath -o bin/ ./cmd/..."]
+
+[tasks.dev]
+depends = ["build"]
+env = { ENV = "development" }
+run = ["./bin/binhost"]
