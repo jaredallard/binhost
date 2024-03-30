@@ -2,14 +2,10 @@ module github.com/jaredallard/binhost
 
 go 1.22
 
-// https://github.com/jaredallard/xz/commit/c20e88619f2c09907bb17bf0b18bbe2627ee570a
-replace github.com/jamespfennell/xz => github.com/jaredallard/xz v0.0.0-20240323042956-c20e88619f2c
-
 require (
 	entgo.io/ent v0.13.1
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/charmbracelet/log v0.4.0
-	github.com/davecgh/go-spew v1.1.1
 	github.com/gofiber/fiber/v3 v3.0.0-20240322111812-5e8df0a348be
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.5.5
