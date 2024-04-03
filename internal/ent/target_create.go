@@ -41,23 +41,19 @@ func (tc *TargetCreate) SetNillableID(u *uuid.UUID) *TargetCreate {
 	return tc
 }
 
-// SetPkgsID sets the "pkgs" edge to the Pkg entity by ID.
-func (tc *TargetCreate) SetPkgsID(id uuid.UUID) *TargetCreate {
-	tc.mutation.SetPkgsID(id)
+// AddPackageIDs adds the "packages" edge to the Pkg entity by IDs.
+func (tc *TargetCreate) AddPackageIDs(ids ...uuid.UUID) *TargetCreate {
+	tc.mutation.AddPackageIDs(ids...)
 	return tc
 }
 
-// SetNillablePkgsID sets the "pkgs" edge to the Pkg entity by ID if the given value is not nil.
-func (tc *TargetCreate) SetNillablePkgsID(id *uuid.UUID) *TargetCreate {
-	if id != nil {
-		tc = tc.SetPkgsID(*id)
+// AddPackages adds the "packages" edges to the Pkg entity.
+func (tc *TargetCreate) AddPackages(p ...*Pkg) *TargetCreate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
 	}
-	return tc
-}
-
-// SetPkgs sets the "pkgs" edge to the Pkg entity.
-func (tc *TargetCreate) SetPkgs(p *Pkg) *TargetCreate {
-	return tc.SetPkgsID(p.ID)
+	return tc.AddPackageIDs(ids...)
 }
 
 // Mutation returns the TargetMutation object of the builder.
@@ -145,12 +141,12 @@ func (tc *TargetCreate) createSpec() (*Target, *sqlgraph.CreateSpec) {
 		_spec.SetField(target.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if nodes := tc.mutation.PkgsIDs(); len(nodes) > 0 {
+	if nodes := tc.mutation.PackagesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   target.PkgsTable,
-			Columns: []string{target.PkgsColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   target.PackagesTable,
+			Columns: []string{target.PackagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pkg.FieldID, field.TypeUUID),
@@ -159,7 +155,6 @@ func (tc *TargetCreate) createSpec() (*Target, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.target_pkgs = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

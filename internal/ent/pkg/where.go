@@ -4,6 +4,7 @@ package pkg
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 	"github.com/jaredallard/binhost/internal/ent/predicate"
 )
@@ -51,6 +52,334 @@ func IDLT(id uuid.UUID) predicate.Pkg {
 // IDLTE applies the LTE predicate on the ID field.
 func IDLTE(id uuid.UUID) predicate.Pkg {
 	return predicate.Pkg(sql.FieldLTE(FieldID, id))
+}
+
+// Repository applies equality check predicate on the "repository" field. It's identical to RepositoryEQ.
+func Repository(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEQ(FieldRepository, v))
+}
+
+// Category applies equality check predicate on the "category" field. It's identical to CategoryEQ.
+func Category(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEQ(FieldCategory, v))
+}
+
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEQ(FieldName, v))
+}
+
+// Version applies equality check predicate on the "version" field. It's identical to VersionEQ.
+func Version(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEQ(FieldVersion, v))
+}
+
+// TargetID applies equality check predicate on the "target_id" field. It's identical to TargetIDEQ.
+func TargetID(v uuid.UUID) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEQ(FieldTargetID, v))
+}
+
+// RepositoryEQ applies the EQ predicate on the "repository" field.
+func RepositoryEQ(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEQ(FieldRepository, v))
+}
+
+// RepositoryNEQ applies the NEQ predicate on the "repository" field.
+func RepositoryNEQ(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldNEQ(FieldRepository, v))
+}
+
+// RepositoryIn applies the In predicate on the "repository" field.
+func RepositoryIn(vs ...string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldIn(FieldRepository, vs...))
+}
+
+// RepositoryNotIn applies the NotIn predicate on the "repository" field.
+func RepositoryNotIn(vs ...string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldNotIn(FieldRepository, vs...))
+}
+
+// RepositoryGT applies the GT predicate on the "repository" field.
+func RepositoryGT(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldGT(FieldRepository, v))
+}
+
+// RepositoryGTE applies the GTE predicate on the "repository" field.
+func RepositoryGTE(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldGTE(FieldRepository, v))
+}
+
+// RepositoryLT applies the LT predicate on the "repository" field.
+func RepositoryLT(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldLT(FieldRepository, v))
+}
+
+// RepositoryLTE applies the LTE predicate on the "repository" field.
+func RepositoryLTE(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldLTE(FieldRepository, v))
+}
+
+// RepositoryContains applies the Contains predicate on the "repository" field.
+func RepositoryContains(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldContains(FieldRepository, v))
+}
+
+// RepositoryHasPrefix applies the HasPrefix predicate on the "repository" field.
+func RepositoryHasPrefix(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldHasPrefix(FieldRepository, v))
+}
+
+// RepositoryHasSuffix applies the HasSuffix predicate on the "repository" field.
+func RepositoryHasSuffix(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldHasSuffix(FieldRepository, v))
+}
+
+// RepositoryEqualFold applies the EqualFold predicate on the "repository" field.
+func RepositoryEqualFold(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEqualFold(FieldRepository, v))
+}
+
+// RepositoryContainsFold applies the ContainsFold predicate on the "repository" field.
+func RepositoryContainsFold(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldContainsFold(FieldRepository, v))
+}
+
+// CategoryEQ applies the EQ predicate on the "category" field.
+func CategoryEQ(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEQ(FieldCategory, v))
+}
+
+// CategoryNEQ applies the NEQ predicate on the "category" field.
+func CategoryNEQ(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldNEQ(FieldCategory, v))
+}
+
+// CategoryIn applies the In predicate on the "category" field.
+func CategoryIn(vs ...string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldIn(FieldCategory, vs...))
+}
+
+// CategoryNotIn applies the NotIn predicate on the "category" field.
+func CategoryNotIn(vs ...string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldNotIn(FieldCategory, vs...))
+}
+
+// CategoryGT applies the GT predicate on the "category" field.
+func CategoryGT(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldGT(FieldCategory, v))
+}
+
+// CategoryGTE applies the GTE predicate on the "category" field.
+func CategoryGTE(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldGTE(FieldCategory, v))
+}
+
+// CategoryLT applies the LT predicate on the "category" field.
+func CategoryLT(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldLT(FieldCategory, v))
+}
+
+// CategoryLTE applies the LTE predicate on the "category" field.
+func CategoryLTE(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldLTE(FieldCategory, v))
+}
+
+// CategoryContains applies the Contains predicate on the "category" field.
+func CategoryContains(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldContains(FieldCategory, v))
+}
+
+// CategoryHasPrefix applies the HasPrefix predicate on the "category" field.
+func CategoryHasPrefix(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldHasPrefix(FieldCategory, v))
+}
+
+// CategoryHasSuffix applies the HasSuffix predicate on the "category" field.
+func CategoryHasSuffix(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldHasSuffix(FieldCategory, v))
+}
+
+// CategoryEqualFold applies the EqualFold predicate on the "category" field.
+func CategoryEqualFold(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEqualFold(FieldCategory, v))
+}
+
+// CategoryContainsFold applies the ContainsFold predicate on the "category" field.
+func CategoryContainsFold(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldContainsFold(FieldCategory, v))
+}
+
+// NameEQ applies the EQ predicate on the "name" field.
+func NameEQ(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEQ(FieldName, v))
+}
+
+// NameNEQ applies the NEQ predicate on the "name" field.
+func NameNEQ(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldNEQ(FieldName, v))
+}
+
+// NameIn applies the In predicate on the "name" field.
+func NameIn(vs ...string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldIn(FieldName, vs...))
+}
+
+// NameNotIn applies the NotIn predicate on the "name" field.
+func NameNotIn(vs ...string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldNotIn(FieldName, vs...))
+}
+
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldGT(FieldName, v))
+}
+
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldGTE(FieldName, v))
+}
+
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldLT(FieldName, v))
+}
+
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldLTE(FieldName, v))
+}
+
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldContains(FieldName, v))
+}
+
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldHasPrefix(FieldName, v))
+}
+
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldHasSuffix(FieldName, v))
+}
+
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEqualFold(FieldName, v))
+}
+
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldContainsFold(FieldName, v))
+}
+
+// VersionEQ applies the EQ predicate on the "version" field.
+func VersionEQ(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEQ(FieldVersion, v))
+}
+
+// VersionNEQ applies the NEQ predicate on the "version" field.
+func VersionNEQ(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldNEQ(FieldVersion, v))
+}
+
+// VersionIn applies the In predicate on the "version" field.
+func VersionIn(vs ...string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldIn(FieldVersion, vs...))
+}
+
+// VersionNotIn applies the NotIn predicate on the "version" field.
+func VersionNotIn(vs ...string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldNotIn(FieldVersion, vs...))
+}
+
+// VersionGT applies the GT predicate on the "version" field.
+func VersionGT(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldGT(FieldVersion, v))
+}
+
+// VersionGTE applies the GTE predicate on the "version" field.
+func VersionGTE(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldGTE(FieldVersion, v))
+}
+
+// VersionLT applies the LT predicate on the "version" field.
+func VersionLT(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldLT(FieldVersion, v))
+}
+
+// VersionLTE applies the LTE predicate on the "version" field.
+func VersionLTE(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldLTE(FieldVersion, v))
+}
+
+// VersionContains applies the Contains predicate on the "version" field.
+func VersionContains(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldContains(FieldVersion, v))
+}
+
+// VersionHasPrefix applies the HasPrefix predicate on the "version" field.
+func VersionHasPrefix(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldHasPrefix(FieldVersion, v))
+}
+
+// VersionHasSuffix applies the HasSuffix predicate on the "version" field.
+func VersionHasSuffix(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldHasSuffix(FieldVersion, v))
+}
+
+// VersionEqualFold applies the EqualFold predicate on the "version" field.
+func VersionEqualFold(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEqualFold(FieldVersion, v))
+}
+
+// VersionContainsFold applies the ContainsFold predicate on the "version" field.
+func VersionContainsFold(v string) predicate.Pkg {
+	return predicate.Pkg(sql.FieldContainsFold(FieldVersion, v))
+}
+
+// TargetIDEQ applies the EQ predicate on the "target_id" field.
+func TargetIDEQ(v uuid.UUID) predicate.Pkg {
+	return predicate.Pkg(sql.FieldEQ(FieldTargetID, v))
+}
+
+// TargetIDNEQ applies the NEQ predicate on the "target_id" field.
+func TargetIDNEQ(v uuid.UUID) predicate.Pkg {
+	return predicate.Pkg(sql.FieldNEQ(FieldTargetID, v))
+}
+
+// TargetIDIn applies the In predicate on the "target_id" field.
+func TargetIDIn(vs ...uuid.UUID) predicate.Pkg {
+	return predicate.Pkg(sql.FieldIn(FieldTargetID, vs...))
+}
+
+// TargetIDNotIn applies the NotIn predicate on the "target_id" field.
+func TargetIDNotIn(vs ...uuid.UUID) predicate.Pkg {
+	return predicate.Pkg(sql.FieldNotIn(FieldTargetID, vs...))
+}
+
+// HasTarget applies the HasEdge predicate on the "target" edge.
+func HasTarget() predicate.Pkg {
+	return predicate.Pkg(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, TargetTable, TargetColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTargetWith applies the HasEdge predicate on the "target" edge with a given conditions (other predicates).
+func HasTargetWith(preds ...predicate.Target) predicate.Pkg {
+	return predicate.Pkg(func(s *sql.Selector) {
+		step := newTargetStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

@@ -27,6 +27,7 @@ import (
 	"github.com/jaredallard/binhost/internal/config"
 	"github.com/jaredallard/binhost/internal/dpi"
 	"github.com/jaredallard/binhost/internal/ent"
+	"github.com/jaredallard/binhost/internal/ent/target"
 	"github.com/jaredallard/binhost/internal/packages"
 )
 
@@ -70,6 +71,17 @@ func (s *Server) createTarget(c fiber.Ctx) error {
 }
 
 func (s *Server) uploadPackage(c fiber.Ctx) error {
+	targetName := c.Params("target")
+	if targetName == "" {
+		return c.Status(fiber.StatusBadRequest).SendString("missing target")
+	}
+
+	// Ensure the target exists
+	t, err := s.deps.DB.Target.Query().Where(target.NameEQ(targetName)).First(c.Context())
+	if t == nil || err != nil {
+		return c.Status(fiber.StatusNotFound).SendString("target not found")
+	}
+
 	pkg, err := packages.New(c.Request().BodyStream())
 	if err != nil {
 		return c.Status(fiber.StatusUnprocessableEntity).SendString(err.Error())
@@ -77,7 +89,20 @@ func (s *Server) uploadPackage(c fiber.Ctx) error {
 	defer c.Request().CloseBodyStream() //nolint:errcheck // Why: Best effort close body.
 	defer pkg.Delete()                  //nolint:errcheck // Why: Best effort delete.
 
-	s.deps.Log.Info("uploading package", "package", pkg.PF)
+	// name suitable for logging
+	logName := pkg.Category + "/" + pkg.Name + "-" + pkg.Version + "::" + pkg.Repository
+
+	s.deps.Log.Info("uploading package", "package", logName, "target", t.Name)
+
+	if err := s.deps.DB.Pkg.Create().
+		SetName(pkg.Name).
+		SetCategory(pkg.Category).
+		SetRepository(pkg.Repository).
+		SetTarget(t).
+		SetVersion(pkg.Version).
+		Exec(c.Context()); err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
 
 	return c.SendStatus(fiber.StatusCreated)
 }
@@ -103,8 +128,8 @@ func (a *Activity) Run(ctx context.Context) error {
 	})).Name("logger")
 
 	app.Get("/v1/targets", a.srv.listTargets).Name("list targets")
-	app.Post("/v1/upload", a.srv.uploadPackage).Name("upload package")
 	app.Post("/v1/targets/:target", a.srv.createTarget).Name("create target")
+	app.Post("/v1/targets/:target/upload", a.srv.uploadPackage).Name("upload package")
 
 	// Gentoo Paths
 	app.Get("/t/:target/Packages", a.srv.getPackage)

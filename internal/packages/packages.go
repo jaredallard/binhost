@@ -48,6 +48,11 @@ func (p *Package) Delete() error {
 
 // Metadata is the representation of a metadata.tar from a gpkg.
 type Metadata struct {
+	// Name is the name of the package as calculated from the PF.
+	Name string
+	// Version is the version of the package as calculated from the PF.
+	Version string
+
 	BuildID       string
 	BuildTime     string
 	Category      string
@@ -181,6 +186,11 @@ func metadataFromDir(dir string) (*Metadata, error) {
 		*field = strings.TrimSuffix(string(data), "\n")
 	}
 
+	// Calculate name and version from PF. The version is the last part of
+	// the string split by the '-' character.
+	parts := strings.Split(md.PF, "-")
+	md.Name = strings.Join(parts[:len(parts)-1], "-")
+	md.Version = parts[len(parts)-1]
 	return md, nil
 }
 

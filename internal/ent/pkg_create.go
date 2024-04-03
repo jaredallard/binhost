@@ -4,12 +4,14 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/jaredallard/binhost/internal/ent/pkg"
+	"github.com/jaredallard/binhost/internal/ent/target"
 )
 
 // PkgCreate is the builder for creating a Pkg entity.
@@ -17,6 +19,36 @@ type PkgCreate struct {
 	config
 	mutation *PkgMutation
 	hooks    []Hook
+}
+
+// SetRepository sets the "repository" field.
+func (pc *PkgCreate) SetRepository(s string) *PkgCreate {
+	pc.mutation.SetRepository(s)
+	return pc
+}
+
+// SetCategory sets the "category" field.
+func (pc *PkgCreate) SetCategory(s string) *PkgCreate {
+	pc.mutation.SetCategory(s)
+	return pc
+}
+
+// SetName sets the "name" field.
+func (pc *PkgCreate) SetName(s string) *PkgCreate {
+	pc.mutation.SetName(s)
+	return pc
+}
+
+// SetVersion sets the "version" field.
+func (pc *PkgCreate) SetVersion(s string) *PkgCreate {
+	pc.mutation.SetVersion(s)
+	return pc
+}
+
+// SetTargetID sets the "target_id" field.
+func (pc *PkgCreate) SetTargetID(u uuid.UUID) *PkgCreate {
+	pc.mutation.SetTargetID(u)
+	return pc
 }
 
 // SetID sets the "id" field.
@@ -31,6 +63,11 @@ func (pc *PkgCreate) SetNillableID(u *uuid.UUID) *PkgCreate {
 		pc.SetID(*u)
 	}
 	return pc
+}
+
+// SetTarget sets the "target" edge to the Target entity.
+func (pc *PkgCreate) SetTarget(t *Target) *PkgCreate {
+	return pc.SetTargetID(t.ID)
 }
 
 // Mutation returns the PkgMutation object of the builder.
@@ -76,6 +113,24 @@ func (pc *PkgCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (pc *PkgCreate) check() error {
+	if _, ok := pc.mutation.Repository(); !ok {
+		return &ValidationError{Name: "repository", err: errors.New(`ent: missing required field "Pkg.repository"`)}
+	}
+	if _, ok := pc.mutation.Category(); !ok {
+		return &ValidationError{Name: "category", err: errors.New(`ent: missing required field "Pkg.category"`)}
+	}
+	if _, ok := pc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Pkg.name"`)}
+	}
+	if _, ok := pc.mutation.Version(); !ok {
+		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Pkg.version"`)}
+	}
+	if _, ok := pc.mutation.TargetID(); !ok {
+		return &ValidationError{Name: "target_id", err: errors.New(`ent: missing required field "Pkg.target_id"`)}
+	}
+	if _, ok := pc.mutation.TargetID(); !ok {
+		return &ValidationError{Name: "target", err: errors.New(`ent: missing required edge "Pkg.target"`)}
+	}
 	return nil
 }
 
@@ -110,6 +165,39 @@ func (pc *PkgCreate) createSpec() (*Pkg, *sqlgraph.CreateSpec) {
 	if id, ok := pc.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
+	}
+	if value, ok := pc.mutation.Repository(); ok {
+		_spec.SetField(pkg.FieldRepository, field.TypeString, value)
+		_node.Repository = value
+	}
+	if value, ok := pc.mutation.Category(); ok {
+		_spec.SetField(pkg.FieldCategory, field.TypeString, value)
+		_node.Category = value
+	}
+	if value, ok := pc.mutation.Name(); ok {
+		_spec.SetField(pkg.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
+	if value, ok := pc.mutation.Version(); ok {
+		_spec.SetField(pkg.FieldVersion, field.TypeString, value)
+		_node.Version = value
+	}
+	if nodes := pc.mutation.TargetIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   pkg.TargetTable,
+			Columns: []string{pkg.TargetColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(target.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.TargetID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

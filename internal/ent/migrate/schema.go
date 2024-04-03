@@ -11,32 +11,43 @@ var (
 	// PkgsColumns holds the columns for the "pkgs" table.
 	PkgsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "repository", Type: field.TypeString},
+		{Name: "category", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
+		{Name: "version", Type: field.TypeString},
+		{Name: "target_id", Type: field.TypeUUID},
 	}
 	// PkgsTable holds the schema information for the "pkgs" table.
 	PkgsTable = &schema.Table{
 		Name:       "pkgs",
 		Columns:    PkgsColumns,
 		PrimaryKey: []*schema.Column{PkgsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "pkgs_targets_target",
+				Columns:    []*schema.Column{PkgsColumns[5]},
+				RefColumns: []*schema.Column{TargetsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "pkg_repository_category_name_version_target_id",
+				Unique:  true,
+				Columns: []*schema.Column{PkgsColumns[1], PkgsColumns[2], PkgsColumns[3], PkgsColumns[4], PkgsColumns[5]},
+			},
+		},
 	}
 	// TargetsColumns holds the columns for the "targets" table.
 	TargetsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "name", Type: field.TypeString, Unique: true},
-		{Name: "target_pkgs", Type: field.TypeUUID, Nullable: true},
 	}
 	// TargetsTable holds the schema information for the "targets" table.
 	TargetsTable = &schema.Table{
 		Name:       "targets",
 		Columns:    TargetsColumns,
 		PrimaryKey: []*schema.Column{TargetsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "targets_pkgs_pkgs",
-				Columns:    []*schema.Column{TargetsColumns[2]},
-				RefColumns: []*schema.Column{PkgsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
@@ -46,5 +57,5 @@ var (
 )
 
 func init() {
-	TargetsTable.ForeignKeys[0].RefTable = PkgsTable
+	PkgsTable.ForeignKeys[0].RefTable = TargetsTable
 }

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
+	"github.com/jaredallard/binhost/internal/ent/pkg"
 	"github.com/jaredallard/binhost/internal/ent/predicate"
 	"github.com/jaredallard/binhost/internal/ent/target"
 )
@@ -34,7 +35,13 @@ type PkgMutation struct {
 	op            Op
 	typ           string
 	id            *uuid.UUID
+	repository    *string
+	category      *string
+	name          *string
+	version       *string
 	clearedFields map[string]struct{}
+	target        *uuid.UUID
+	clearedtarget bool
 	done          bool
 	oldValue      func(context.Context) (*Pkg, error)
 	predicates    []predicate.Pkg
@@ -144,6 +151,213 @@ func (m *PkgMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	}
 }
 
+// SetRepository sets the "repository" field.
+func (m *PkgMutation) SetRepository(s string) {
+	m.repository = &s
+}
+
+// Repository returns the value of the "repository" field in the mutation.
+func (m *PkgMutation) Repository() (r string, exists bool) {
+	v := m.repository
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRepository returns the old "repository" field's value of the Pkg entity.
+// If the Pkg object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PkgMutation) OldRepository(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRepository is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRepository requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRepository: %w", err)
+	}
+	return oldValue.Repository, nil
+}
+
+// ResetRepository resets all changes to the "repository" field.
+func (m *PkgMutation) ResetRepository() {
+	m.repository = nil
+}
+
+// SetCategory sets the "category" field.
+func (m *PkgMutation) SetCategory(s string) {
+	m.category = &s
+}
+
+// Category returns the value of the "category" field in the mutation.
+func (m *PkgMutation) Category() (r string, exists bool) {
+	v := m.category
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCategory returns the old "category" field's value of the Pkg entity.
+// If the Pkg object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PkgMutation) OldCategory(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCategory is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCategory requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCategory: %w", err)
+	}
+	return oldValue.Category, nil
+}
+
+// ResetCategory resets all changes to the "category" field.
+func (m *PkgMutation) ResetCategory() {
+	m.category = nil
+}
+
+// SetName sets the "name" field.
+func (m *PkgMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *PkgMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Pkg entity.
+// If the Pkg object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PkgMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *PkgMutation) ResetName() {
+	m.name = nil
+}
+
+// SetVersion sets the "version" field.
+func (m *PkgMutation) SetVersion(s string) {
+	m.version = &s
+}
+
+// Version returns the value of the "version" field in the mutation.
+func (m *PkgMutation) Version() (r string, exists bool) {
+	v := m.version
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVersion returns the old "version" field's value of the Pkg entity.
+// If the Pkg object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PkgMutation) OldVersion(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVersion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVersion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVersion: %w", err)
+	}
+	return oldValue.Version, nil
+}
+
+// ResetVersion resets all changes to the "version" field.
+func (m *PkgMutation) ResetVersion() {
+	m.version = nil
+}
+
+// SetTargetID sets the "target_id" field.
+func (m *PkgMutation) SetTargetID(u uuid.UUID) {
+	m.target = &u
+}
+
+// TargetID returns the value of the "target_id" field in the mutation.
+func (m *PkgMutation) TargetID() (r uuid.UUID, exists bool) {
+	v := m.target
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTargetID returns the old "target_id" field's value of the Pkg entity.
+// If the Pkg object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PkgMutation) OldTargetID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTargetID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTargetID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTargetID: %w", err)
+	}
+	return oldValue.TargetID, nil
+}
+
+// ResetTargetID resets all changes to the "target_id" field.
+func (m *PkgMutation) ResetTargetID() {
+	m.target = nil
+}
+
+// ClearTarget clears the "target" edge to the Target entity.
+func (m *PkgMutation) ClearTarget() {
+	m.clearedtarget = true
+	m.clearedFields[pkg.FieldTargetID] = struct{}{}
+}
+
+// TargetCleared reports if the "target" edge to the Target entity was cleared.
+func (m *PkgMutation) TargetCleared() bool {
+	return m.clearedtarget
+}
+
+// TargetIDs returns the "target" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TargetID instead. It exists only for internal usage by the builders.
+func (m *PkgMutation) TargetIDs() (ids []uuid.UUID) {
+	if id := m.target; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTarget resets all changes to the "target" edge.
+func (m *PkgMutation) ResetTarget() {
+	m.target = nil
+	m.clearedtarget = false
+}
+
 // Where appends a list predicates to the PkgMutation builder.
 func (m *PkgMutation) Where(ps ...predicate.Pkg) {
 	m.predicates = append(m.predicates, ps...)
@@ -178,7 +392,22 @@ func (m *PkgMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PkgMutation) Fields() []string {
-	fields := make([]string, 0, 0)
+	fields := make([]string, 0, 5)
+	if m.repository != nil {
+		fields = append(fields, pkg.FieldRepository)
+	}
+	if m.category != nil {
+		fields = append(fields, pkg.FieldCategory)
+	}
+	if m.name != nil {
+		fields = append(fields, pkg.FieldName)
+	}
+	if m.version != nil {
+		fields = append(fields, pkg.FieldVersion)
+	}
+	if m.target != nil {
+		fields = append(fields, pkg.FieldTargetID)
+	}
 	return fields
 }
 
@@ -186,6 +415,18 @@ func (m *PkgMutation) Fields() []string {
 // return value indicates that this field was not set, or was not defined in the
 // schema.
 func (m *PkgMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case pkg.FieldRepository:
+		return m.Repository()
+	case pkg.FieldCategory:
+		return m.Category()
+	case pkg.FieldName:
+		return m.Name()
+	case pkg.FieldVersion:
+		return m.Version()
+	case pkg.FieldTargetID:
+		return m.TargetID()
+	}
 	return nil, false
 }
 
@@ -193,6 +434,18 @@ func (m *PkgMutation) Field(name string) (ent.Value, bool) {
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
 func (m *PkgMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case pkg.FieldRepository:
+		return m.OldRepository(ctx)
+	case pkg.FieldCategory:
+		return m.OldCategory(ctx)
+	case pkg.FieldName:
+		return m.OldName(ctx)
+	case pkg.FieldVersion:
+		return m.OldVersion(ctx)
+	case pkg.FieldTargetID:
+		return m.OldTargetID(ctx)
+	}
 	return nil, fmt.Errorf("unknown Pkg field %s", name)
 }
 
@@ -201,6 +454,41 @@ func (m *PkgMutation) OldField(ctx context.Context, name string) (ent.Value, err
 // type.
 func (m *PkgMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case pkg.FieldRepository:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRepository(v)
+		return nil
+	case pkg.FieldCategory:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCategory(v)
+		return nil
+	case pkg.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case pkg.FieldVersion:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVersion(v)
+		return nil
+	case pkg.FieldTargetID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTargetID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Pkg field %s", name)
 }
@@ -222,6 +510,8 @@ func (m *PkgMutation) AddedField(name string) (ent.Value, bool) {
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
 func (m *PkgMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Pkg numeric field %s", name)
 }
 
@@ -247,24 +537,50 @@ func (m *PkgMutation) ClearField(name string) error {
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
 func (m *PkgMutation) ResetField(name string) error {
+	switch name {
+	case pkg.FieldRepository:
+		m.ResetRepository()
+		return nil
+	case pkg.FieldCategory:
+		m.ResetCategory()
+		return nil
+	case pkg.FieldName:
+		m.ResetName()
+		return nil
+	case pkg.FieldVersion:
+		m.ResetVersion()
+		return nil
+	case pkg.FieldTargetID:
+		m.ResetTargetID()
+		return nil
+	}
 	return fmt.Errorf("unknown Pkg field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *PkgMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.target != nil {
+		edges = append(edges, pkg.EdgeTarget)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *PkgMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case pkg.EdgeTarget:
+		if id := m.target; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *PkgMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
@@ -276,41 +592,59 @@ func (m *PkgMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *PkgMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedtarget {
+		edges = append(edges, pkg.EdgeTarget)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *PkgMutation) EdgeCleared(name string) bool {
+	switch name {
+	case pkg.EdgeTarget:
+		return m.clearedtarget
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *PkgMutation) ClearEdge(name string) error {
+	switch name {
+	case pkg.EdgeTarget:
+		m.ClearTarget()
+		return nil
+	}
 	return fmt.Errorf("unknown Pkg unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *PkgMutation) ResetEdge(name string) error {
+	switch name {
+	case pkg.EdgeTarget:
+		m.ResetTarget()
+		return nil
+	}
 	return fmt.Errorf("unknown Pkg edge %s", name)
 }
 
 // TargetMutation represents an operation that mutates the Target nodes in the graph.
 type TargetMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	name          *string
-	clearedFields map[string]struct{}
-	pkgs          *uuid.UUID
-	clearedpkgs   bool
-	done          bool
-	oldValue      func(context.Context) (*Target, error)
-	predicates    []predicate.Target
+	op              Op
+	typ             string
+	id              *uuid.UUID
+	name            *string
+	clearedFields   map[string]struct{}
+	packages        map[uuid.UUID]struct{}
+	removedpackages map[uuid.UUID]struct{}
+	clearedpackages bool
+	done            bool
+	oldValue        func(context.Context) (*Target, error)
+	predicates      []predicate.Target
 }
 
 var _ ent.Mutation = (*TargetMutation)(nil)
@@ -453,43 +787,58 @@ func (m *TargetMutation) ResetName() {
 	m.name = nil
 }
 
-// SetPkgsID sets the "pkgs" edge to the Pkg entity by id.
-func (m *TargetMutation) SetPkgsID(id uuid.UUID) {
-	m.pkgs = &id
+// AddPackageIDs adds the "packages" edge to the Pkg entity by ids.
+func (m *TargetMutation) AddPackageIDs(ids ...uuid.UUID) {
+	if m.packages == nil {
+		m.packages = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.packages[ids[i]] = struct{}{}
+	}
 }
 
-// ClearPkgs clears the "pkgs" edge to the Pkg entity.
-func (m *TargetMutation) ClearPkgs() {
-	m.clearedpkgs = true
+// ClearPackages clears the "packages" edge to the Pkg entity.
+func (m *TargetMutation) ClearPackages() {
+	m.clearedpackages = true
 }
 
-// PkgsCleared reports if the "pkgs" edge to the Pkg entity was cleared.
-func (m *TargetMutation) PkgsCleared() bool {
-	return m.clearedpkgs
+// PackagesCleared reports if the "packages" edge to the Pkg entity was cleared.
+func (m *TargetMutation) PackagesCleared() bool {
+	return m.clearedpackages
 }
 
-// PkgsID returns the "pkgs" edge ID in the mutation.
-func (m *TargetMutation) PkgsID() (id uuid.UUID, exists bool) {
-	if m.pkgs != nil {
-		return *m.pkgs, true
+// RemovePackageIDs removes the "packages" edge to the Pkg entity by IDs.
+func (m *TargetMutation) RemovePackageIDs(ids ...uuid.UUID) {
+	if m.removedpackages == nil {
+		m.removedpackages = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.packages, ids[i])
+		m.removedpackages[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPackages returns the removed IDs of the "packages" edge to the Pkg entity.
+func (m *TargetMutation) RemovedPackagesIDs() (ids []uuid.UUID) {
+	for id := range m.removedpackages {
+		ids = append(ids, id)
 	}
 	return
 }
 
-// PkgsIDs returns the "pkgs" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// PkgsID instead. It exists only for internal usage by the builders.
-func (m *TargetMutation) PkgsIDs() (ids []uuid.UUID) {
-	if id := m.pkgs; id != nil {
-		ids = append(ids, *id)
+// PackagesIDs returns the "packages" edge IDs in the mutation.
+func (m *TargetMutation) PackagesIDs() (ids []uuid.UUID) {
+	for id := range m.packages {
+		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetPkgs resets all changes to the "pkgs" edge.
-func (m *TargetMutation) ResetPkgs() {
-	m.pkgs = nil
-	m.clearedpkgs = false
+// ResetPackages resets all changes to the "packages" edge.
+func (m *TargetMutation) ResetPackages() {
+	m.packages = nil
+	m.clearedpackages = false
+	m.removedpackages = nil
 }
 
 // Where appends a list predicates to the TargetMutation builder.
@@ -626,8 +975,8 @@ func (m *TargetMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TargetMutation) AddedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.pkgs != nil {
-		edges = append(edges, target.EdgePkgs)
+	if m.packages != nil {
+		edges = append(edges, target.EdgePackages)
 	}
 	return edges
 }
@@ -636,10 +985,12 @@ func (m *TargetMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *TargetMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case target.EdgePkgs:
-		if id := m.pkgs; id != nil {
-			return []ent.Value{*id}
+	case target.EdgePackages:
+		ids := make([]ent.Value, 0, len(m.packages))
+		for id := range m.packages {
+			ids = append(ids, id)
 		}
+		return ids
 	}
 	return nil
 }
@@ -647,20 +998,31 @@ func (m *TargetMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TargetMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 1)
+	if m.removedpackages != nil {
+		edges = append(edges, target.EdgePackages)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *TargetMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case target.EdgePackages:
+		ids := make([]ent.Value, 0, len(m.removedpackages))
+		for id := range m.removedpackages {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TargetMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.clearedpkgs {
-		edges = append(edges, target.EdgePkgs)
+	if m.clearedpackages {
+		edges = append(edges, target.EdgePackages)
 	}
 	return edges
 }
@@ -669,8 +1031,8 @@ func (m *TargetMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *TargetMutation) EdgeCleared(name string) bool {
 	switch name {
-	case target.EdgePkgs:
-		return m.clearedpkgs
+	case target.EdgePackages:
+		return m.clearedpackages
 	}
 	return false
 }
@@ -679,9 +1041,6 @@ func (m *TargetMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *TargetMutation) ClearEdge(name string) error {
 	switch name {
-	case target.EdgePkgs:
-		m.ClearPkgs()
-		return nil
 	}
 	return fmt.Errorf("unknown Target unique edge %s", name)
 }
@@ -690,8 +1049,8 @@ func (m *TargetMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *TargetMutation) ResetEdge(name string) error {
 	switch name {
-	case target.EdgePkgs:
-		m.ResetPkgs()
+	case target.EdgePackages:
+		m.ResetPackages()
 		return nil
 	}
 	return fmt.Errorf("unknown Target edge %s", name)

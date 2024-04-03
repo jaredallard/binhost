@@ -22,5 +22,7 @@ func (Target) Fields() []ent.Field {
 
 // Edges of the Target.
 func (Target) Edges() []ent.Edge {
-	return []ent.Edge{edge.To("pkgs", Pkg.Type).Comment("Packages in this target").Unique()}
+	return []ent.Edge{
+		edge.From("packages", Pkg.Type).Ref("target"),
+	}
 }

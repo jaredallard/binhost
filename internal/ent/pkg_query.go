@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jaredallard/binhost/internal/ent/pkg"
 	"github.com/jaredallard/binhost/internal/ent/predicate"
+	"github.com/jaredallard/binhost/internal/ent/target"
 )
 
 // PkgQuery is the builder for querying Pkg entities.
@@ -22,6 +23,7 @@ type PkgQuery struct {
 	order      []pkg.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Pkg
+	withTarget *TargetQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -56,6 +58,28 @@ func (pq *PkgQuery) Unique(unique bool) *PkgQuery {
 func (pq *PkgQuery) Order(o ...pkg.OrderOption) *PkgQuery {
 	pq.order = append(pq.order, o...)
 	return pq
+}
+
+// QueryTarget chains the current query on the "target" edge.
+func (pq *PkgQuery) QueryTarget() *TargetQuery {
+	query := (&TargetClient{config: pq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := pq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := pq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pkg.Table, pkg.FieldID, selector),
+			sqlgraph.To(target.Table, target.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, pkg.TargetTable, pkg.TargetColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(pq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Pkg entity from the query.
@@ -250,14 +274,38 @@ func (pq *PkgQuery) Clone() *PkgQuery {
 		order:      append([]pkg.OrderOption{}, pq.order...),
 		inters:     append([]Interceptor{}, pq.inters...),
 		predicates: append([]predicate.Pkg{}, pq.predicates...),
+		withTarget: pq.withTarget.Clone(),
 		// clone intermediate query.
 		sql:  pq.sql.Clone(),
 		path: pq.path,
 	}
 }
 
+// WithTarget tells the query-builder to eager-load the nodes that are connected to
+// the "target" edge. The optional arguments are used to configure the query builder of the edge.
+func (pq *PkgQuery) WithTarget(opts ...func(*TargetQuery)) *PkgQuery {
+	query := (&TargetClient{config: pq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	pq.withTarget = query
+	return pq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		Repository string `json:"repository,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.Pkg.Query().
+//		GroupBy(pkg.FieldRepository).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
 func (pq *PkgQuery) GroupBy(field string, fields ...string) *PkgGroupBy {
 	pq.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &PkgGroupBy{build: pq}
@@ -269,6 +317,16 @@ func (pq *PkgQuery) GroupBy(field string, fields ...string) *PkgGroupBy {
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		Repository string `json:"repository,omitempty"`
+//	}
+//
+//	client.Pkg.Query().
+//		Select(pkg.FieldRepository).
+//		Scan(ctx, &v)
 func (pq *PkgQuery) Select(fields ...string) *PkgSelect {
 	pq.ctx.Fields = append(pq.ctx.Fields, fields...)
 	sbuild := &PkgSelect{PkgQuery: pq}
@@ -310,8 +368,11 @@ func (pq *PkgQuery) prepareQuery(ctx context.Context) error {
 
 func (pq *PkgQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pkg, error) {
 	var (
-		nodes = []*Pkg{}
-		_spec = pq.querySpec()
+		nodes       = []*Pkg{}
+		_spec       = pq.querySpec()
+		loadedTypes = [1]bool{
+			pq.withTarget != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Pkg).scanValues(nil, columns)
@@ -319,6 +380,7 @@ func (pq *PkgQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pkg, err
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Pkg{config: pq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -330,7 +392,43 @@ func (pq *PkgQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pkg, err
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := pq.withTarget; query != nil {
+		if err := pq.loadTarget(ctx, query, nodes, nil,
+			func(n *Pkg, e *Target) { n.Edges.Target = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (pq *PkgQuery) loadTarget(ctx context.Context, query *TargetQuery, nodes []*Pkg, init func(*Pkg), assign func(*Pkg, *Target)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Pkg)
+	for i := range nodes {
+		fk := nodes[i].TargetID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(target.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "target_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (pq *PkgQuery) sqlCount(ctx context.Context) (int, error) {
@@ -357,6 +455,9 @@ func (pq *PkgQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != pkg.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if pq.withTarget != nil {
+			_spec.Node.AddColumnOnce(pkg.FieldTargetID)
 		}
 	}
 	if ps := pq.predicates; len(ps) > 0 {

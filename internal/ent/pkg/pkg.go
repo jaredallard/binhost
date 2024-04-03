@@ -4,6 +4,7 @@ package pkg
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -12,13 +13,37 @@ const (
 	Label = "pkg"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldRepository holds the string denoting the repository field in the database.
+	FieldRepository = "repository"
+	// FieldCategory holds the string denoting the category field in the database.
+	FieldCategory = "category"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
+	// FieldVersion holds the string denoting the version field in the database.
+	FieldVersion = "version"
+	// FieldTargetID holds the string denoting the target_id field in the database.
+	FieldTargetID = "target_id"
+	// EdgeTarget holds the string denoting the target edge name in mutations.
+	EdgeTarget = "target"
 	// Table holds the table name of the pkg in the database.
 	Table = "pkgs"
+	// TargetTable is the table that holds the target relation/edge.
+	TargetTable = "pkgs"
+	// TargetInverseTable is the table name for the Target entity.
+	// It exists in this package in order to avoid circular dependency with the "target" package.
+	TargetInverseTable = "targets"
+	// TargetColumn is the table column denoting the target relation/edge.
+	TargetColumn = "target_id"
 )
 
 // Columns holds all SQL columns for pkg fields.
 var Columns = []string{
 	FieldID,
+	FieldRepository,
+	FieldCategory,
+	FieldName,
+	FieldVersion,
+	FieldTargetID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -42,4 +67,43 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByRepository orders the results by the repository field.
+func ByRepository(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRepository, opts...).ToFunc()
+}
+
+// ByCategory orders the results by the category field.
+func ByCategory(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCategory, opts...).ToFunc()
+}
+
+// ByName orders the results by the name field.
+func ByName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByVersion orders the results by the version field.
+func ByVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldVersion, opts...).ToFunc()
+}
+
+// ByTargetID orders the results by the target_id field.
+func ByTargetID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTargetID, opts...).ToFunc()
+}
+
+// ByTargetField orders the results by target field.
+func ByTargetField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTargetStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newTargetStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TargetInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, TargetTable, TargetColumn),
+	)
 }

@@ -9,7 +9,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
-	"github.com/jaredallard/binhost/internal/ent/pkg"
 	"github.com/jaredallard/binhost/internal/ent/target"
 )
 
@@ -23,28 +22,25 @@ type Target struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TargetQuery when eager-loading is set.
 	Edges        TargetEdges `json:"edges"`
-	target_pkgs  *uuid.UUID
 	selectValues sql.SelectValues
 }
 
 // TargetEdges holds the relations/edges for other nodes in the graph.
 type TargetEdges struct {
-	// Packages in this target
-	Pkgs *Pkg `json:"pkgs,omitempty"`
+	// Packages holds the value of the packages edge.
+	Packages []*Pkg `json:"packages,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
 }
 
-// PkgsOrErr returns the Pkgs value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e TargetEdges) PkgsOrErr() (*Pkg, error) {
-	if e.Pkgs != nil {
-		return e.Pkgs, nil
-	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: pkg.Label}
+// PackagesOrErr returns the Packages value or an error if the edge
+// was not loaded in eager-loading.
+func (e TargetEdges) PackagesOrErr() ([]*Pkg, error) {
+	if e.loadedTypes[0] {
+		return e.Packages, nil
 	}
-	return nil, &NotLoadedError{edge: "pkgs"}
+	return nil, &NotLoadedError{edge: "packages"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -56,8 +52,6 @@ func (*Target) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case target.FieldID:
 			values[i] = new(uuid.UUID)
-		case target.ForeignKeys[0]: // target_pkgs
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -85,13 +79,6 @@ func (t *Target) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				t.Name = value.String
 			}
-		case target.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field target_pkgs", values[i])
-			} else if value.Valid {
-				t.target_pkgs = new(uuid.UUID)
-				*t.target_pkgs = *value.S.(*uuid.UUID)
-			}
 		default:
 			t.selectValues.Set(columns[i], values[i])
 		}
@@ -105,9 +92,9 @@ func (t *Target) Value(name string) (ent.Value, error) {
 	return t.selectValues.Get(name)
 }
 
-// QueryPkgs queries the "pkgs" edge of the Target entity.
-func (t *Target) QueryPkgs() *PkgQuery {
-	return NewTargetClient(t.config).QueryPkgs(t)
+// QueryPackages queries the "packages" edge of the Target entity.
+func (t *Target) QueryPackages() *PkgQuery {
+	return NewTargetClient(t.config).QueryPackages(t)
 }
 
 // Update returns a builder for updating this Target.

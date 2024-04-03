@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -19,12 +20,11 @@ import (
 // TargetQuery is the builder for querying Target entities.
 type TargetQuery struct {
 	config
-	ctx        *QueryContext
-	order      []target.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Target
-	withPkgs   *PkgQuery
-	withFKs    bool
+	ctx          *QueryContext
+	order        []target.OrderOption
+	inters       []Interceptor
+	predicates   []predicate.Target
+	withPackages *PkgQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -61,8 +61,8 @@ func (tq *TargetQuery) Order(o ...target.OrderOption) *TargetQuery {
 	return tq
 }
 
-// QueryPkgs chains the current query on the "pkgs" edge.
-func (tq *TargetQuery) QueryPkgs() *PkgQuery {
+// QueryPackages chains the current query on the "packages" edge.
+func (tq *TargetQuery) QueryPackages() *PkgQuery {
 	query := (&PkgClient{config: tq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := tq.prepareQuery(ctx); err != nil {
@@ -75,7 +75,7 @@ func (tq *TargetQuery) QueryPkgs() *PkgQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(target.Table, target.FieldID, selector),
 			sqlgraph.To(pkg.Table, pkg.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, target.PkgsTable, target.PkgsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, target.PackagesTable, target.PackagesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -270,26 +270,26 @@ func (tq *TargetQuery) Clone() *TargetQuery {
 		return nil
 	}
 	return &TargetQuery{
-		config:     tq.config,
-		ctx:        tq.ctx.Clone(),
-		order:      append([]target.OrderOption{}, tq.order...),
-		inters:     append([]Interceptor{}, tq.inters...),
-		predicates: append([]predicate.Target{}, tq.predicates...),
-		withPkgs:   tq.withPkgs.Clone(),
+		config:       tq.config,
+		ctx:          tq.ctx.Clone(),
+		order:        append([]target.OrderOption{}, tq.order...),
+		inters:       append([]Interceptor{}, tq.inters...),
+		predicates:   append([]predicate.Target{}, tq.predicates...),
+		withPackages: tq.withPackages.Clone(),
 		// clone intermediate query.
 		sql:  tq.sql.Clone(),
 		path: tq.path,
 	}
 }
 
-// WithPkgs tells the query-builder to eager-load the nodes that are connected to
-// the "pkgs" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TargetQuery) WithPkgs(opts ...func(*PkgQuery)) *TargetQuery {
+// WithPackages tells the query-builder to eager-load the nodes that are connected to
+// the "packages" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TargetQuery) WithPackages(opts ...func(*PkgQuery)) *TargetQuery {
 	query := (&PkgClient{config: tq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	tq.withPkgs = query
+	tq.withPackages = query
 	return tq
 }
 
@@ -370,18 +370,11 @@ func (tq *TargetQuery) prepareQuery(ctx context.Context) error {
 func (tq *TargetQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Target, error) {
 	var (
 		nodes       = []*Target{}
-		withFKs     = tq.withFKs
 		_spec       = tq.querySpec()
 		loadedTypes = [1]bool{
-			tq.withPkgs != nil,
+			tq.withPackages != nil,
 		}
 	)
-	if tq.withPkgs != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, target.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Target).scanValues(nil, columns)
 	}
@@ -400,44 +393,43 @@ func (tq *TargetQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Targe
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := tq.withPkgs; query != nil {
-		if err := tq.loadPkgs(ctx, query, nodes, nil,
-			func(n *Target, e *Pkg) { n.Edges.Pkgs = e }); err != nil {
+	if query := tq.withPackages; query != nil {
+		if err := tq.loadPackages(ctx, query, nodes,
+			func(n *Target) { n.Edges.Packages = []*Pkg{} },
+			func(n *Target, e *Pkg) { n.Edges.Packages = append(n.Edges.Packages, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (tq *TargetQuery) loadPkgs(ctx context.Context, query *PkgQuery, nodes []*Target, init func(*Target), assign func(*Target, *Pkg)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Target)
+func (tq *TargetQuery) loadPackages(ctx context.Context, query *PkgQuery, nodes []*Target, init func(*Target), assign func(*Target, *Pkg)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Target)
 	for i := range nodes {
-		if nodes[i].target_pkgs == nil {
-			continue
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
 		}
-		fk := *nodes[i].target_pkgs
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	if len(ids) == 0 {
-		return nil
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(pkg.FieldTargetID)
 	}
-	query.Where(pkg.IDIn(ids...))
+	query.Where(predicate.Pkg(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(target.PackagesColumn), fks...))
+	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
+		fk := n.TargetID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "target_pkgs" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "target_id" returned %v for node %v`, fk, n.ID)
 		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
+		assign(node, n)
 	}
 	return nil
 }

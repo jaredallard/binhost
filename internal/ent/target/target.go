@@ -15,17 +15,17 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// EdgePkgs holds the string denoting the pkgs edge name in mutations.
-	EdgePkgs = "pkgs"
+	// EdgePackages holds the string denoting the packages edge name in mutations.
+	EdgePackages = "packages"
 	// Table holds the table name of the target in the database.
 	Table = "targets"
-	// PkgsTable is the table that holds the pkgs relation/edge.
-	PkgsTable = "targets"
-	// PkgsInverseTable is the table name for the Pkg entity.
+	// PackagesTable is the table that holds the packages relation/edge.
+	PackagesTable = "pkgs"
+	// PackagesInverseTable is the table name for the Pkg entity.
 	// It exists in this package in order to avoid circular dependency with the "pkg" package.
-	PkgsInverseTable = "pkgs"
-	// PkgsColumn is the table column denoting the pkgs relation/edge.
-	PkgsColumn = "target_pkgs"
+	PackagesInverseTable = "pkgs"
+	// PackagesColumn is the table column denoting the packages relation/edge.
+	PackagesColumn = "target_id"
 )
 
 // Columns holds all SQL columns for target fields.
@@ -34,21 +34,10 @@ var Columns = []string{
 	FieldName,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "targets"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"target_pkgs",
-}
-
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -73,16 +62,23 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
-// ByPkgsField orders the results by pkgs field.
-func ByPkgsField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByPackagesCount orders the results by packages count.
+func ByPackagesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newPkgsStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborsCount(s, newPackagesStep(), opts...)
 	}
 }
-func newPkgsStep() *sqlgraph.Step {
+
+// ByPackages orders the results by packages terms.
+func ByPackages(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPackagesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newPackagesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(PkgsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, PkgsTable, PkgsColumn),
+		sqlgraph.To(PackagesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, PackagesTable, PackagesColumn),
 	)
 }

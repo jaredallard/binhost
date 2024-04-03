@@ -43,23 +43,19 @@ func (tu *TargetUpdate) SetNillableName(s *string) *TargetUpdate {
 	return tu
 }
 
-// SetPkgsID sets the "pkgs" edge to the Pkg entity by ID.
-func (tu *TargetUpdate) SetPkgsID(id uuid.UUID) *TargetUpdate {
-	tu.mutation.SetPkgsID(id)
+// AddPackageIDs adds the "packages" edge to the Pkg entity by IDs.
+func (tu *TargetUpdate) AddPackageIDs(ids ...uuid.UUID) *TargetUpdate {
+	tu.mutation.AddPackageIDs(ids...)
 	return tu
 }
 
-// SetNillablePkgsID sets the "pkgs" edge to the Pkg entity by ID if the given value is not nil.
-func (tu *TargetUpdate) SetNillablePkgsID(id *uuid.UUID) *TargetUpdate {
-	if id != nil {
-		tu = tu.SetPkgsID(*id)
+// AddPackages adds the "packages" edges to the Pkg entity.
+func (tu *TargetUpdate) AddPackages(p ...*Pkg) *TargetUpdate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
 	}
-	return tu
-}
-
-// SetPkgs sets the "pkgs" edge to the Pkg entity.
-func (tu *TargetUpdate) SetPkgs(p *Pkg) *TargetUpdate {
-	return tu.SetPkgsID(p.ID)
+	return tu.AddPackageIDs(ids...)
 }
 
 // Mutation returns the TargetMutation object of the builder.
@@ -67,10 +63,25 @@ func (tu *TargetUpdate) Mutation() *TargetMutation {
 	return tu.mutation
 }
 
-// ClearPkgs clears the "pkgs" edge to the Pkg entity.
-func (tu *TargetUpdate) ClearPkgs() *TargetUpdate {
-	tu.mutation.ClearPkgs()
+// ClearPackages clears all "packages" edges to the Pkg entity.
+func (tu *TargetUpdate) ClearPackages() *TargetUpdate {
+	tu.mutation.ClearPackages()
 	return tu
+}
+
+// RemovePackageIDs removes the "packages" edge to Pkg entities by IDs.
+func (tu *TargetUpdate) RemovePackageIDs(ids ...uuid.UUID) *TargetUpdate {
+	tu.mutation.RemovePackageIDs(ids...)
+	return tu
+}
+
+// RemovePackages removes "packages" edges to Pkg entities.
+func (tu *TargetUpdate) RemovePackages(p ...*Pkg) *TargetUpdate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return tu.RemovePackageIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -112,12 +123,12 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tu.mutation.Name(); ok {
 		_spec.SetField(target.FieldName, field.TypeString, value)
 	}
-	if tu.mutation.PkgsCleared() {
+	if tu.mutation.PackagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   target.PkgsTable,
-			Columns: []string{target.PkgsColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   target.PackagesTable,
+			Columns: []string{target.PackagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pkg.FieldID, field.TypeUUID),
@@ -125,12 +136,28 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.PkgsIDs(); len(nodes) > 0 {
+	if nodes := tu.mutation.RemovedPackagesIDs(); len(nodes) > 0 && !tu.mutation.PackagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   target.PkgsTable,
-			Columns: []string{target.PkgsColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   target.PackagesTable,
+			Columns: []string{target.PackagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pkg.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.PackagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   target.PackagesTable,
+			Columns: []string{target.PackagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pkg.FieldID, field.TypeUUID),
@@ -175,23 +202,19 @@ func (tuo *TargetUpdateOne) SetNillableName(s *string) *TargetUpdateOne {
 	return tuo
 }
 
-// SetPkgsID sets the "pkgs" edge to the Pkg entity by ID.
-func (tuo *TargetUpdateOne) SetPkgsID(id uuid.UUID) *TargetUpdateOne {
-	tuo.mutation.SetPkgsID(id)
+// AddPackageIDs adds the "packages" edge to the Pkg entity by IDs.
+func (tuo *TargetUpdateOne) AddPackageIDs(ids ...uuid.UUID) *TargetUpdateOne {
+	tuo.mutation.AddPackageIDs(ids...)
 	return tuo
 }
 
-// SetNillablePkgsID sets the "pkgs" edge to the Pkg entity by ID if the given value is not nil.
-func (tuo *TargetUpdateOne) SetNillablePkgsID(id *uuid.UUID) *TargetUpdateOne {
-	if id != nil {
-		tuo = tuo.SetPkgsID(*id)
+// AddPackages adds the "packages" edges to the Pkg entity.
+func (tuo *TargetUpdateOne) AddPackages(p ...*Pkg) *TargetUpdateOne {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
 	}
-	return tuo
-}
-
-// SetPkgs sets the "pkgs" edge to the Pkg entity.
-func (tuo *TargetUpdateOne) SetPkgs(p *Pkg) *TargetUpdateOne {
-	return tuo.SetPkgsID(p.ID)
+	return tuo.AddPackageIDs(ids...)
 }
 
 // Mutation returns the TargetMutation object of the builder.
@@ -199,10 +222,25 @@ func (tuo *TargetUpdateOne) Mutation() *TargetMutation {
 	return tuo.mutation
 }
 
-// ClearPkgs clears the "pkgs" edge to the Pkg entity.
-func (tuo *TargetUpdateOne) ClearPkgs() *TargetUpdateOne {
-	tuo.mutation.ClearPkgs()
+// ClearPackages clears all "packages" edges to the Pkg entity.
+func (tuo *TargetUpdateOne) ClearPackages() *TargetUpdateOne {
+	tuo.mutation.ClearPackages()
 	return tuo
+}
+
+// RemovePackageIDs removes the "packages" edge to Pkg entities by IDs.
+func (tuo *TargetUpdateOne) RemovePackageIDs(ids ...uuid.UUID) *TargetUpdateOne {
+	tuo.mutation.RemovePackageIDs(ids...)
+	return tuo
+}
+
+// RemovePackages removes "packages" edges to Pkg entities.
+func (tuo *TargetUpdateOne) RemovePackages(p ...*Pkg) *TargetUpdateOne {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return tuo.RemovePackageIDs(ids...)
 }
 
 // Where appends a list predicates to the TargetUpdate builder.
@@ -274,12 +312,12 @@ func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (_node *Target, err err
 	if value, ok := tuo.mutation.Name(); ok {
 		_spec.SetField(target.FieldName, field.TypeString, value)
 	}
-	if tuo.mutation.PkgsCleared() {
+	if tuo.mutation.PackagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   target.PkgsTable,
-			Columns: []string{target.PkgsColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   target.PackagesTable,
+			Columns: []string{target.PackagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pkg.FieldID, field.TypeUUID),
@@ -287,12 +325,28 @@ func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (_node *Target, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.PkgsIDs(); len(nodes) > 0 {
+	if nodes := tuo.mutation.RemovedPackagesIDs(); len(nodes) > 0 && !tuo.mutation.PackagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   target.PkgsTable,
-			Columns: []string{target.PkgsColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   target.PackagesTable,
+			Columns: []string{target.PackagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pkg.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.PackagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   target.PackagesTable,
+			Columns: []string{target.PackagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pkg.FieldID, field.TypeUUID),

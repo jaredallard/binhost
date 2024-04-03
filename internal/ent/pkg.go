@@ -10,14 +10,48 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
 	"github.com/jaredallard/binhost/internal/ent/pkg"
+	"github.com/jaredallard/binhost/internal/ent/target"
 )
 
 // Pkg is the model entity for the Pkg schema.
 type Pkg struct {
-	config
+	config `json:"-"`
 	// ID of the ent.
-	ID           uuid.UUID `json:"id,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
+	// Repository holds the value of the "repository" field.
+	Repository string `json:"repository,omitempty"`
+	// Category holds the value of the "category" field.
+	Category string `json:"category,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
+	// Version holds the value of the "version" field.
+	Version string `json:"version,omitempty"`
+	// TargetID holds the value of the "target_id" field.
+	TargetID uuid.UUID `json:"target_id,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the PkgQuery when eager-loading is set.
+	Edges        PkgEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// PkgEdges holds the relations/edges for other nodes in the graph.
+type PkgEdges struct {
+	// Target holds the value of the target edge.
+	Target *Target `json:"target,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// TargetOrErr returns the Target value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e PkgEdges) TargetOrErr() (*Target, error) {
+	if e.Target != nil {
+		return e.Target, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: target.Label}
+	}
+	return nil, &NotLoadedError{edge: "target"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -25,7 +59,9 @@ func (*Pkg) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case pkg.FieldID:
+		case pkg.FieldRepository, pkg.FieldCategory, pkg.FieldName, pkg.FieldVersion:
+			values[i] = new(sql.NullString)
+		case pkg.FieldID, pkg.FieldTargetID:
 			values[i] = new(uuid.UUID)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -48,6 +84,36 @@ func (pk *Pkg) assignValues(columns []string, values []any) error {
 			} else if value != nil {
 				pk.ID = *value
 			}
+		case pkg.FieldRepository:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field repository", values[i])
+			} else if value.Valid {
+				pk.Repository = value.String
+			}
+		case pkg.FieldCategory:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field category", values[i])
+			} else if value.Valid {
+				pk.Category = value.String
+			}
+		case pkg.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				pk.Name = value.String
+			}
+		case pkg.FieldVersion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field version", values[i])
+			} else if value.Valid {
+				pk.Version = value.String
+			}
+		case pkg.FieldTargetID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field target_id", values[i])
+			} else if value != nil {
+				pk.TargetID = *value
+			}
 		default:
 			pk.selectValues.Set(columns[i], values[i])
 		}
@@ -59,6 +125,11 @@ func (pk *Pkg) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (pk *Pkg) Value(name string) (ent.Value, error) {
 	return pk.selectValues.Get(name)
+}
+
+// QueryTarget queries the "target" edge of the Pkg entity.
+func (pk *Pkg) QueryTarget() *TargetQuery {
+	return NewPkgClient(pk.config).QueryTarget(pk)
 }
 
 // Update returns a builder for updating this Pkg.
@@ -83,7 +154,21 @@ func (pk *Pkg) Unwrap() *Pkg {
 func (pk *Pkg) String() string {
 	var builder strings.Builder
 	builder.WriteString("Pkg(")
-	builder.WriteString(fmt.Sprintf("id=%v", pk.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", pk.ID))
+	builder.WriteString("repository=")
+	builder.WriteString(pk.Repository)
+	builder.WriteString(", ")
+	builder.WriteString("category=")
+	builder.WriteString(pk.Category)
+	builder.WriteString(", ")
+	builder.WriteString("name=")
+	builder.WriteString(pk.Name)
+	builder.WriteString(", ")
+	builder.WriteString("version=")
+	builder.WriteString(pk.Version)
+	builder.WriteString(", ")
+	builder.WriteString("target_id=")
+	builder.WriteString(fmt.Sprintf("%v", pk.TargetID))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -10,8 +10,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/jaredallard/binhost/internal/ent/pkg"
 	"github.com/jaredallard/binhost/internal/ent/predicate"
+	"github.com/jaredallard/binhost/internal/ent/target"
 )
 
 // PkgUpdate is the builder for updating Pkg entities.
@@ -27,9 +29,90 @@ func (pu *PkgUpdate) Where(ps ...predicate.Pkg) *PkgUpdate {
 	return pu
 }
 
+// SetRepository sets the "repository" field.
+func (pu *PkgUpdate) SetRepository(s string) *PkgUpdate {
+	pu.mutation.SetRepository(s)
+	return pu
+}
+
+// SetNillableRepository sets the "repository" field if the given value is not nil.
+func (pu *PkgUpdate) SetNillableRepository(s *string) *PkgUpdate {
+	if s != nil {
+		pu.SetRepository(*s)
+	}
+	return pu
+}
+
+// SetCategory sets the "category" field.
+func (pu *PkgUpdate) SetCategory(s string) *PkgUpdate {
+	pu.mutation.SetCategory(s)
+	return pu
+}
+
+// SetNillableCategory sets the "category" field if the given value is not nil.
+func (pu *PkgUpdate) SetNillableCategory(s *string) *PkgUpdate {
+	if s != nil {
+		pu.SetCategory(*s)
+	}
+	return pu
+}
+
+// SetName sets the "name" field.
+func (pu *PkgUpdate) SetName(s string) *PkgUpdate {
+	pu.mutation.SetName(s)
+	return pu
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (pu *PkgUpdate) SetNillableName(s *string) *PkgUpdate {
+	if s != nil {
+		pu.SetName(*s)
+	}
+	return pu
+}
+
+// SetVersion sets the "version" field.
+func (pu *PkgUpdate) SetVersion(s string) *PkgUpdate {
+	pu.mutation.SetVersion(s)
+	return pu
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (pu *PkgUpdate) SetNillableVersion(s *string) *PkgUpdate {
+	if s != nil {
+		pu.SetVersion(*s)
+	}
+	return pu
+}
+
+// SetTargetID sets the "target_id" field.
+func (pu *PkgUpdate) SetTargetID(u uuid.UUID) *PkgUpdate {
+	pu.mutation.SetTargetID(u)
+	return pu
+}
+
+// SetNillableTargetID sets the "target_id" field if the given value is not nil.
+func (pu *PkgUpdate) SetNillableTargetID(u *uuid.UUID) *PkgUpdate {
+	if u != nil {
+		pu.SetTargetID(*u)
+	}
+	return pu
+}
+
+// SetTarget sets the "target" edge to the Target entity.
+func (pu *PkgUpdate) SetTarget(t *Target) *PkgUpdate {
+	return pu.SetTargetID(t.ID)
+}
+
 // Mutation returns the PkgMutation object of the builder.
 func (pu *PkgUpdate) Mutation() *PkgMutation {
 	return pu.mutation
+}
+
+// ClearTarget clears the "target" edge to the Target entity.
+func (pu *PkgUpdate) ClearTarget() *PkgUpdate {
+	pu.mutation.ClearTarget()
+	return pu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -59,7 +142,18 @@ func (pu *PkgUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (pu *PkgUpdate) check() error {
+	if _, ok := pu.mutation.TargetID(); pu.mutation.TargetCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Pkg.target"`)
+	}
+	return nil
+}
+
 func (pu *PkgUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := pu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(pkg.Table, pkg.Columns, sqlgraph.NewFieldSpec(pkg.FieldID, field.TypeUUID))
 	if ps := pu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -67,6 +161,47 @@ func (pu *PkgUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := pu.mutation.Repository(); ok {
+		_spec.SetField(pkg.FieldRepository, field.TypeString, value)
+	}
+	if value, ok := pu.mutation.Category(); ok {
+		_spec.SetField(pkg.FieldCategory, field.TypeString, value)
+	}
+	if value, ok := pu.mutation.Name(); ok {
+		_spec.SetField(pkg.FieldName, field.TypeString, value)
+	}
+	if value, ok := pu.mutation.Version(); ok {
+		_spec.SetField(pkg.FieldVersion, field.TypeString, value)
+	}
+	if pu.mutation.TargetCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   pkg.TargetTable,
+			Columns: []string{pkg.TargetColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(target.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := pu.mutation.TargetIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   pkg.TargetTable,
+			Columns: []string{pkg.TargetColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(target.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, pu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -88,9 +223,90 @@ type PkgUpdateOne struct {
 	mutation *PkgMutation
 }
 
+// SetRepository sets the "repository" field.
+func (puo *PkgUpdateOne) SetRepository(s string) *PkgUpdateOne {
+	puo.mutation.SetRepository(s)
+	return puo
+}
+
+// SetNillableRepository sets the "repository" field if the given value is not nil.
+func (puo *PkgUpdateOne) SetNillableRepository(s *string) *PkgUpdateOne {
+	if s != nil {
+		puo.SetRepository(*s)
+	}
+	return puo
+}
+
+// SetCategory sets the "category" field.
+func (puo *PkgUpdateOne) SetCategory(s string) *PkgUpdateOne {
+	puo.mutation.SetCategory(s)
+	return puo
+}
+
+// SetNillableCategory sets the "category" field if the given value is not nil.
+func (puo *PkgUpdateOne) SetNillableCategory(s *string) *PkgUpdateOne {
+	if s != nil {
+		puo.SetCategory(*s)
+	}
+	return puo
+}
+
+// SetName sets the "name" field.
+func (puo *PkgUpdateOne) SetName(s string) *PkgUpdateOne {
+	puo.mutation.SetName(s)
+	return puo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (puo *PkgUpdateOne) SetNillableName(s *string) *PkgUpdateOne {
+	if s != nil {
+		puo.SetName(*s)
+	}
+	return puo
+}
+
+// SetVersion sets the "version" field.
+func (puo *PkgUpdateOne) SetVersion(s string) *PkgUpdateOne {
+	puo.mutation.SetVersion(s)
+	return puo
+}
+
+// SetNillableVersion sets the "version" field if the given value is not nil.
+func (puo *PkgUpdateOne) SetNillableVersion(s *string) *PkgUpdateOne {
+	if s != nil {
+		puo.SetVersion(*s)
+	}
+	return puo
+}
+
+// SetTargetID sets the "target_id" field.
+func (puo *PkgUpdateOne) SetTargetID(u uuid.UUID) *PkgUpdateOne {
+	puo.mutation.SetTargetID(u)
+	return puo
+}
+
+// SetNillableTargetID sets the "target_id" field if the given value is not nil.
+func (puo *PkgUpdateOne) SetNillableTargetID(u *uuid.UUID) *PkgUpdateOne {
+	if u != nil {
+		puo.SetTargetID(*u)
+	}
+	return puo
+}
+
+// SetTarget sets the "target" edge to the Target entity.
+func (puo *PkgUpdateOne) SetTarget(t *Target) *PkgUpdateOne {
+	return puo.SetTargetID(t.ID)
+}
+
 // Mutation returns the PkgMutation object of the builder.
 func (puo *PkgUpdateOne) Mutation() *PkgMutation {
 	return puo.mutation
+}
+
+// ClearTarget clears the "target" edge to the Target entity.
+func (puo *PkgUpdateOne) ClearTarget() *PkgUpdateOne {
+	puo.mutation.ClearTarget()
+	return puo
 }
 
 // Where appends a list predicates to the PkgUpdate builder.
@@ -133,7 +349,18 @@ func (puo *PkgUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (puo *PkgUpdateOne) check() error {
+	if _, ok := puo.mutation.TargetID(); puo.mutation.TargetCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Pkg.target"`)
+	}
+	return nil
+}
+
 func (puo *PkgUpdateOne) sqlSave(ctx context.Context) (_node *Pkg, err error) {
+	if err := puo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(pkg.Table, pkg.Columns, sqlgraph.NewFieldSpec(pkg.FieldID, field.TypeUUID))
 	id, ok := puo.mutation.ID()
 	if !ok {
@@ -158,6 +385,47 @@ func (puo *PkgUpdateOne) sqlSave(ctx context.Context) (_node *Pkg, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := puo.mutation.Repository(); ok {
+		_spec.SetField(pkg.FieldRepository, field.TypeString, value)
+	}
+	if value, ok := puo.mutation.Category(); ok {
+		_spec.SetField(pkg.FieldCategory, field.TypeString, value)
+	}
+	if value, ok := puo.mutation.Name(); ok {
+		_spec.SetField(pkg.FieldName, field.TypeString, value)
+	}
+	if value, ok := puo.mutation.Version(); ok {
+		_spec.SetField(pkg.FieldVersion, field.TypeString, value)
+	}
+	if puo.mutation.TargetCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   pkg.TargetTable,
+			Columns: []string{pkg.TargetColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(target.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := puo.mutation.TargetIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   pkg.TargetTable,
+			Columns: []string{pkg.TargetColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(target.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Pkg{config: puo.config}
 	_spec.Assign = _node.assignValues

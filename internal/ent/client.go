@@ -316,6 +316,22 @@ func (c *PkgClient) GetX(ctx context.Context, id uuid.UUID) *Pkg {
 	return obj
 }
 
+// QueryTarget queries the target edge of a Pkg.
+func (c *PkgClient) QueryTarget(pk *Pkg) *TargetQuery {
+	query := (&TargetClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := pk.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pkg.Table, pkg.FieldID, id),
+			sqlgraph.To(target.Table, target.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, pkg.TargetTable, pkg.TargetColumn),
+		)
+		fromV = sqlgraph.Neighbors(pk.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *PkgClient) Hooks() []Hook {
 	return c.hooks.Pkg
@@ -449,15 +465,15 @@ func (c *TargetClient) GetX(ctx context.Context, id uuid.UUID) *Target {
 	return obj
 }
 
-// QueryPkgs queries the pkgs edge of a Target.
-func (c *TargetClient) QueryPkgs(t *Target) *PkgQuery {
+// QueryPackages queries the packages edge of a Target.
+func (c *TargetClient) QueryPackages(t *Target) *PkgQuery {
 	query := (&PkgClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := t.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(target.Table, target.FieldID, id),
 			sqlgraph.To(pkg.Table, pkg.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, target.PkgsTable, target.PkgsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, target.PackagesTable, target.PackagesColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil
