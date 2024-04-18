@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Updates all markdown files in the repository with the latest table of
+# contents based on their contents.
+
+# TOOL_VERSION is the version of the mdtoc tool to use.
+TOOL_VERSION=v1.3.0
+
+exec find . -name '*.md' -exec go run sigs.k8s.io/mdtoc@"$TOOL_VERSION" --inplace --max-depth=5 {} + -print
