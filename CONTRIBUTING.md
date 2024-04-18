@@ -34,9 +34,9 @@ because we **squash** commits on merge.
 ### Pull Request Format
 
 We do not provide templates for pull requests because of our nature of
-squash and merging using the PR body. As template would muddy each
+squash and merging using the PR body. A template would muddy each
 commit's body. So, feel free to use whatever format you'd like, but we'd
-like the following:
+like it to at least contain the following:
 
 - A clear and concise title following conventional commit format[^1]
 - A body that clearly explains the 5 W's of the change:
@@ -48,7 +48,13 @@ like the following:
   - **This does not need to be a form! Just approach your wording from
     these questions.**
 - (Optional, but recommended): 72 character line wrap for the title and
-  body. (This is a soft limit, not a hard one.)
+  body.
+
+Some good examples:
+
+- <https://github.com/rgst-io/stencil-golang/commit/676f11ef3925ba6bcf98fba2bfe0391a07aff3b6>
+- <https://github.com/getoutreach/devbase/commit/7c4890efd8591442be2f975ef65d6929e31afea8>
+- <https://github.com/getoutreach/devbase/commit/5dd66a2ddd23c4ff24a19a72465b89ca96181689>
 
 ### Code Size
 
