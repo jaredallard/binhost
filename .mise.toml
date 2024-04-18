@@ -1,27 +1,35 @@
+
+# Default versions of tools, to update these, set [tools.override]
 [tools]
 golang = "1.22"
-golangci-lint = "1.56.2"
+shfmt = "3"
+golangci-lint = "1.56"
+goreleaser = "latest"
 "go:gotest.tools/gotestsum" = "v1.11.0"
 "go:golang.org/x/tools/cmd/goimports" = "latest"
 
-[tasks.tests]
-alias = "test"
+[tasks.build]
+description = "Build a binary for the current platform/architecture"
+run = "go build -trimpath -o ./bin/ -v ./cmd/..."
+
+[tasks.test]
 description = "Run tests"
-run = ["gotestsum", "golangci-lint run --allow-parallel-runners --fast"]
+run = "gotestsum"
+
+[tasks.lint]
+description = "Run linters"
+run = "golangci-lint run"
 
 [tasks.fmt]
 alias = "format"
 description = "Format code"
-run = ["goimports -w .", "go mod tidy"]
+run = [
+  "go mod tidy",
+  "gofmt -s -w .",
+  "goimports -w .",
+  "shfmt -w -i 2 -ci -sr .",
+]
 
-[tasks.build]
-alias = "default"
-description = "Build the project"
-outputs = ["bin/binhost"]
-run = ["go mod download", "go build -v -trimpath -o bin/ ./cmd/..."]
+## <<Stencil::Block(custom)>>
 
-[tasks.dev]
-depends = ["build"]
-sources = ["cmd/**/*.go", "internal/**/*.go", "go.mod", "go.sum"]
-env = { ENV = "development" }
-run = ["./bin/binhost"]
+## <</Stencil::Block>>

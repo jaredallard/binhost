@@ -188,6 +188,9 @@ func metadataFromDir(dir string) (*Metadata, error) {
 
 	// Calculate name and version from PF. The version is the last part of
 	// the string split by the '-' character.
+	//
+	// TODO(jaredallard): This will break on packages with - in the
+	// version. I'm not sure how we're supposed to get the version then.
 	parts := strings.Split(md.PF, "-")
 	md.Name = strings.Join(parts[:len(parts)-1], "-")
 	md.Version = parts[len(parts)-1]
