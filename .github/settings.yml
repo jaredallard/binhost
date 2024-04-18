@@ -1,0 +1,33 @@
+repository:
+  # Squash and merge only, no rebase or merge commits.
+  allow_squash_merge: true
+  allow_merge_commit: false
+  allow_rebase_merge: false
+  delete_branch_on_merge: true
+
+  # Squash using the PR title and body to make it easier to edit and
+  # control without requiring a rebase.
+  squash_merge_commit_title: PR_TITLE
+  squash_merge_commit_message: PR_BODY
+
+branches:
+  - name: main
+    protection:
+      enforce_admins: false
+      required_status_checks:
+        checks:
+          - context: "go test"
+            app_id: &github_actions_id 15368
+          - context: "golangci-lint"
+            app_id: *github_actions_id
+      required_pull_request_reviews:
+        dismiss_stale_reviews: false
+        require_code_owner_reviews: false
+        required_approving_review_count: 0
+        bypass_pull_request_allowances: null
+      restrictions: null
+      required_linear_history: true
+      allow_force_pushes: true
+      allow_deletions: false
+      block_creations: false
+      required_conversation_resolution: true
