@@ -14,6 +14,7 @@ import (
 	"github.com/jaredallard/binhost/internal/ent/pkg"
 	"github.com/jaredallard/binhost/internal/ent/predicate"
 	"github.com/jaredallard/binhost/internal/ent/target"
+	"github.com/jaredallard/binhost/internal/parser"
 )
 
 // PkgUpdate is the builder for updating Pkg entities.
@@ -82,6 +83,12 @@ func (pu *PkgUpdate) SetNillableVersion(s *string) *PkgUpdate {
 	if s != nil {
 		pu.SetVersion(*s)
 	}
+	return pu
+}
+
+// SetPackageFields sets the "package_fields" field.
+func (pu *PkgUpdate) SetPackageFields(pc *parser.PackageCommon) *PkgUpdate {
+	pu.mutation.SetPackageFields(pc)
 	return pu
 }
 
@@ -173,6 +180,9 @@ func (pu *PkgUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := pu.mutation.Version(); ok {
 		_spec.SetField(pkg.FieldVersion, field.TypeString, value)
+	}
+	if value, ok := pu.mutation.PackageFields(); ok {
+		_spec.SetField(pkg.FieldPackageFields, field.TypeJSON, value)
 	}
 	if pu.mutation.TargetCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -276,6 +286,12 @@ func (puo *PkgUpdateOne) SetNillableVersion(s *string) *PkgUpdateOne {
 	if s != nil {
 		puo.SetVersion(*s)
 	}
+	return puo
+}
+
+// SetPackageFields sets the "package_fields" field.
+func (puo *PkgUpdateOne) SetPackageFields(pc *parser.PackageCommon) *PkgUpdateOne {
+	puo.mutation.SetPackageFields(pc)
 	return puo
 }
 
@@ -397,6 +413,9 @@ func (puo *PkgUpdateOne) sqlSave(ctx context.Context) (_node *Pkg, err error) {
 	}
 	if value, ok := puo.mutation.Version(); ok {
 		_spec.SetField(pkg.FieldVersion, field.TypeString, value)
+	}
+	if value, ok := puo.mutation.PackageFields(); ok {
+		_spec.SetField(pkg.FieldPackageFields, field.TypeJSON, value)
 	}
 	if puo.mutation.TargetCleared() {
 		edge := &sqlgraph.EdgeSpec{

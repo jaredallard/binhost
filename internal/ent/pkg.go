@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jaredallard/binhost/internal/ent/pkg"
 	"github.com/jaredallard/binhost/internal/ent/target"
+	"github.com/jaredallard/binhost/internal/parser"
 )
 
 // Pkg is the model entity for the Pkg schema.
@@ -26,6 +28,8 @@ type Pkg struct {
 	Name string `json:"name,omitempty"`
 	// Version holds the value of the "version" field.
 	Version string `json:"version,omitempty"`
+	// Gentoo specific fields shared between the index and metadata.tar files
+	PackageFields *parser.PackageCommon `json:"package_fields,omitempty"`
 	// TargetID holds the value of the "target_id" field.
 	TargetID uuid.UUID `json:"target_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -59,6 +63,8 @@ func (*Pkg) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case pkg.FieldPackageFields:
+			values[i] = new([]byte)
 		case pkg.FieldRepository, pkg.FieldCategory, pkg.FieldName, pkg.FieldVersion:
 			values[i] = new(sql.NullString)
 		case pkg.FieldID, pkg.FieldTargetID:
@@ -107,6 +113,14 @@ func (pk *Pkg) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field version", values[i])
 			} else if value.Valid {
 				pk.Version = value.String
+			}
+		case pkg.FieldPackageFields:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field package_fields", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &pk.PackageFields); err != nil {
+					return fmt.Errorf("unmarshal field package_fields: %w", err)
+				}
 			}
 		case pkg.FieldTargetID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
@@ -166,6 +180,9 @@ func (pk *Pkg) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("version=")
 	builder.WriteString(pk.Version)
+	builder.WriteString(", ")
+	builder.WriteString("package_fields=")
+	builder.WriteString(fmt.Sprintf("%v", pk.PackageFields))
 	builder.WriteString(", ")
 	builder.WriteString("target_id=")
 	builder.WriteString(fmt.Sprintf("%v", pk.TargetID))

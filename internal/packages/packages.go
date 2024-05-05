@@ -21,9 +21,11 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/jaredallard/binhost/internal/archive"
+	"github.com/jaredallard/binhost/internal/parser"
 )
 
 // supportedCompressionExtensions is a list of supported compression
@@ -48,33 +50,25 @@ func (p *Package) Delete() error {
 
 // Metadata is the representation of a metadata.tar from a gpkg.
 type Metadata struct {
+	parser.PackageCommon
+
 	// Name is the name of the package as calculated from the PF.
 	Name string
 	// Version is the version of the package as calculated from the PF.
 	Version string
 
-	BuildID       string
-	BuildTime     string
-	Category      string
 	CBuild        string
 	CFlags        string
 	CHost         string
+	CXX           string
 	CXXFlags      string
-	DefinedPhases string
+	Category      string
 	Description   string
-	EAPI          string
-	Features      string
-	Inherited     string
-	IUSE          string
-	IUSEEffective string
-	Keywords      string
+	Features      []string
+	IUseEffective string
+	Inherited     []string
 	LDFLAGS       string
-	License       string
 	PF            string
-	Repository    string
-	Size          string
-	Slot          string
-	USE           string
 }
 
 // New creates a new Package from the provided [io.ReadCloser]. The
@@ -152,9 +146,11 @@ func New(r io.Reader) (*Package, error) {
 func metadataFromDir(dir string) (*Metadata, error) {
 	md := &Metadata{}
 
-	filesToFields := map[string]*string{
-		"BUILD_ID":       &md.BuildID,
-		"BUILD_TIME":     &md.BuildTime,
+	filesToFields := map[string]any{
+		"BUILD_ID":   &md.BuildID,
+		"BUILD_TIME": &md.BuildTime,
+		"PF":         &md.PF,
+
 		"CATEGORY":       &md.Category,
 		"CBUILD":         &md.CBuild,
 		"CFLAGS":         &md.CFlags,
@@ -165,25 +161,40 @@ func metadataFromDir(dir string) (*Metadata, error) {
 		"EAPI":           &md.EAPI,
 		"FEATURES":       &md.Features,
 		"INHERITED":      &md.Inherited,
-		"IUSE":           &md.IUSE,
-		"IUSE_EFFECTIVE": &md.IUSEEffective,
+		"IUSE":           &md.IUse,
+		"IUSE_EFFECTIVE": &md.IUseEffective,
 		"KEYWORDS":       &md.Keywords,
 		"LDFLAGS":        &md.LDFLAGS,
-		"LICENSE":        &md.License,
-		"PF":             &md.PF,
-		"repository":     &md.Repository,
+		"LICENSE":        &md.Licenses,
+		"repository":     &md.Repo,
 		"SIZE":           &md.Size,
 		"SLOT":           &md.Slot,
-		"USE":            &md.USE,
+		"USE":            &md.Use,
 	}
 
 	for file, field := range filesToFields {
 		data, err := os.ReadFile(filepath.Join(dir, file))
 		if err != nil {
-			return nil, fmt.Errorf("failed to read file %s: %w", file, err)
+			// Can't read? It's likely just not set.
+			continue
 		}
 
-		*field = strings.TrimSuffix(string(data), "\n")
+		strData := strings.TrimSuffix(string(data), "\n")
+
+		switch fv := field.(type) {
+		case *int:
+			i, err := strconv.Atoi(strings.TrimSpace(strData))
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse %s's value (%s) as int", file, string(data))
+			}
+			*fv = i
+		case *string:
+			*fv = strings.TrimSuffix(strData, "\n")
+		case *[]string:
+			*fv = strings.Split(strData, " ")
+		default:
+			panic(fmt.Errorf("unable to parse %s into %t", file, field))
+		}
 	}
 
 	// Calculate name and version from PF. The version is the last part of

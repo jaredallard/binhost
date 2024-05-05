@@ -73,12 +73,12 @@ func (index Index) EncodeInto(w io.Writer) error {
 	return nil
 }
 
-// Package is a Gentoo binhost package.
-type Package struct {
+// PackageCommon is data shared between both a Packages index and the
+// actual package's metadata.tar.xz distributed with it.
+type PackageCommon struct {
 	BDepends      string   `colon:"BDEPEND"`
 	BuildID       string   `colon:"BUILD_ID"`
 	BuildTime     string   `colon:"BUILD_TIME"`
-	CPV           string   `colon:"CPV"`
 	DefinedPhases []string `colon:"DEFINED_PHASES"`
 	EAPI          int      `colon:"EAPI"`
 	ELibc         string   `colon:"ELIBC"`
@@ -86,7 +86,6 @@ type Package struct {
 	Use           string   `colon:"USE"`
 	Keywords      []string `colon:"KEYWORDS"`
 	Licenses      []string `colon:"LICENSE"`
-	Path          string   `colon:"PATH"`
 	Slot          string   `colon:"SLOT"`
 	Depends       string   `colon:"DEPEND"`
 	IDepend       string   `colon:"IDEPEND"`
@@ -95,11 +94,19 @@ type Package struct {
 	Requires      []string `colon:"REQUIRES"`
 	Restrict      string   `colon:"RESTRICT"`
 	Provides      []string `colon:"PROVIDES"`
-	SHA1          string   `colon:"SHA1"`
-	MD5           string   `colon:"MD5"`
 	Size          int      `colon:"SIZE"`
-	ModifiedTime  int      `colon:"MTIME"`
 	Repo          string   `colon:"REPO"`
+}
+
+// Package is a Gentoo binhost package.
+type Package struct {
+	PackageCommon
+
+	CPV          string `colon:"CPV"`
+	Path         string `colon:"PATH"`
+	SHA1         string `colon:"SHA1"`
+	MD5          string `colon:"MD5"`
+	ModifiedTime int    `colon:"MTIME"`
 }
 
 // EncodeInto serializes the package into the given writer using the

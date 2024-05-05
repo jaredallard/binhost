@@ -31,6 +31,7 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 
 	entsql "entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/schema"
 	_ "github.com/jackc/pgx/v5/stdlib" // Used by ent.
 	"github.com/jaredallard/binhost/internal/config"
 	"github.com/jaredallard/binhost/internal/ent"
@@ -77,7 +78,7 @@ func New(ctx context.Context, log *slog.Logger) (*Dependencies, error) {
 	}
 
 	client := ent.NewClient(ent.Driver(entsql.OpenDB(dialect.Postgres, db)))
-	if err := client.Schema.Create(ctx); err != nil {
+	if err := client.Schema.Create(ctx, schema.WithDropColumn(true), schema.WithDropIndex(true)); err != nil {
 		return nil, fmt.Errorf("failed creating schema resources: %w", err)
 	}
 

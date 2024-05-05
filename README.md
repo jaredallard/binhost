@@ -13,6 +13,20 @@ targets.
 - [License](#license)
 <!-- /toc -->
 
+## Developing
+
+We use [mise]() to manage development versions and tasks.
+
+```bash
+mise run build
+```
+
+Now you can run the server with:
+
+```bash
+ENV=development ./bin/binhost
+```
+
 ## API
 
 Loose documentation of the API provided by `binhost` is below.

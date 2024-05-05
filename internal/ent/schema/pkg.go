@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
+	"github.com/jaredallard/binhost/internal/parser"
 )
 
 // Pkg holds the schema definition for the Pkg entity.
@@ -21,6 +22,8 @@ func (Pkg) Fields() []ent.Field {
 		field.String("category"),
 		field.String("name"),
 		field.String("version"),
+		field.JSON("package_fields", &parser.PackageCommon{}).
+			Comment("Gentoo specific fields shared between the index and metadata.tar files"),
 		field.UUID("target_id", uuid.UUID{}),
 	}
 }

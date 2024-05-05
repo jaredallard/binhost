@@ -15,6 +15,7 @@ var (
 		{Name: "category", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "version", Type: field.TypeString},
+		{Name: "package_fields", Type: field.TypeJSON},
 		{Name: "target_id", Type: field.TypeUUID},
 	}
 	// PkgsTable holds the schema information for the "pkgs" table.
@@ -25,7 +26,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "pkgs_targets_target",
-				Columns:    []*schema.Column{PkgsColumns[5]},
+				Columns:    []*schema.Column{PkgsColumns[6]},
 				RefColumns: []*schema.Column{TargetsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -34,7 +35,7 @@ var (
 			{
 				Name:    "pkg_repository_category_name_version_target_id",
 				Unique:  true,
-				Columns: []*schema.Column{PkgsColumns[1], PkgsColumns[2], PkgsColumns[3], PkgsColumns[4], PkgsColumns[5]},
+				Columns: []*schema.Column{PkgsColumns[1], PkgsColumns[2], PkgsColumns[3], PkgsColumns[4], PkgsColumns[6]},
 			},
 		},
 	}

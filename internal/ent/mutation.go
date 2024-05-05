@@ -14,6 +14,7 @@ import (
 	"github.com/jaredallard/binhost/internal/ent/pkg"
 	"github.com/jaredallard/binhost/internal/ent/predicate"
 	"github.com/jaredallard/binhost/internal/ent/target"
+	"github.com/jaredallard/binhost/internal/parser"
 )
 
 const (
@@ -32,19 +33,20 @@ const (
 // PkgMutation represents an operation that mutates the Pkg nodes in the graph.
 type PkgMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	repository    *string
-	category      *string
-	name          *string
-	version       *string
-	clearedFields map[string]struct{}
-	target        *uuid.UUID
-	clearedtarget bool
-	done          bool
-	oldValue      func(context.Context) (*Pkg, error)
-	predicates    []predicate.Pkg
+	op             Op
+	typ            string
+	id             *uuid.UUID
+	repository     *string
+	category       *string
+	name           *string
+	version        *string
+	package_fields **parser.PackageCommon
+	clearedFields  map[string]struct{}
+	target         *uuid.UUID
+	clearedtarget  bool
+	done           bool
+	oldValue       func(context.Context) (*Pkg, error)
+	predicates     []predicate.Pkg
 }
 
 var _ ent.Mutation = (*PkgMutation)(nil)
@@ -295,6 +297,42 @@ func (m *PkgMutation) ResetVersion() {
 	m.version = nil
 }
 
+// SetPackageFields sets the "package_fields" field.
+func (m *PkgMutation) SetPackageFields(pc *parser.PackageCommon) {
+	m.package_fields = &pc
+}
+
+// PackageFields returns the value of the "package_fields" field in the mutation.
+func (m *PkgMutation) PackageFields() (r *parser.PackageCommon, exists bool) {
+	v := m.package_fields
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPackageFields returns the old "package_fields" field's value of the Pkg entity.
+// If the Pkg object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PkgMutation) OldPackageFields(ctx context.Context) (v *parser.PackageCommon, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPackageFields is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPackageFields requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPackageFields: %w", err)
+	}
+	return oldValue.PackageFields, nil
+}
+
+// ResetPackageFields resets all changes to the "package_fields" field.
+func (m *PkgMutation) ResetPackageFields() {
+	m.package_fields = nil
+}
+
 // SetTargetID sets the "target_id" field.
 func (m *PkgMutation) SetTargetID(u uuid.UUID) {
 	m.target = &u
@@ -392,7 +430,7 @@ func (m *PkgMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PkgMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.repository != nil {
 		fields = append(fields, pkg.FieldRepository)
 	}
@@ -404,6 +442,9 @@ func (m *PkgMutation) Fields() []string {
 	}
 	if m.version != nil {
 		fields = append(fields, pkg.FieldVersion)
+	}
+	if m.package_fields != nil {
+		fields = append(fields, pkg.FieldPackageFields)
 	}
 	if m.target != nil {
 		fields = append(fields, pkg.FieldTargetID)
@@ -424,6 +465,8 @@ func (m *PkgMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case pkg.FieldVersion:
 		return m.Version()
+	case pkg.FieldPackageFields:
+		return m.PackageFields()
 	case pkg.FieldTargetID:
 		return m.TargetID()
 	}
@@ -443,6 +486,8 @@ func (m *PkgMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldName(ctx)
 	case pkg.FieldVersion:
 		return m.OldVersion(ctx)
+	case pkg.FieldPackageFields:
+		return m.OldPackageFields(ctx)
 	case pkg.FieldTargetID:
 		return m.OldTargetID(ctx)
 	}
@@ -481,6 +526,13 @@ func (m *PkgMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetVersion(v)
+		return nil
+	case pkg.FieldPackageFields:
+		v, ok := value.(*parser.PackageCommon)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPackageFields(v)
 		return nil
 	case pkg.FieldTargetID:
 		v, ok := value.(uuid.UUID)
@@ -549,6 +601,9 @@ func (m *PkgMutation) ResetField(name string) error {
 		return nil
 	case pkg.FieldVersion:
 		m.ResetVersion()
+		return nil
+	case pkg.FieldPackageFields:
+		m.ResetPackageFields()
 		return nil
 	case pkg.FieldTargetID:
 		m.ResetTargetID()

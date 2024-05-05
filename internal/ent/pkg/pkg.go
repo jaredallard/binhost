@@ -21,6 +21,8 @@ const (
 	FieldName = "name"
 	// FieldVersion holds the string denoting the version field in the database.
 	FieldVersion = "version"
+	// FieldPackageFields holds the string denoting the package_fields field in the database.
+	FieldPackageFields = "package_fields"
 	// FieldTargetID holds the string denoting the target_id field in the database.
 	FieldTargetID = "target_id"
 	// EdgeTarget holds the string denoting the target edge name in mutations.
@@ -43,6 +45,7 @@ var Columns = []string{
 	FieldCategory,
 	FieldName,
 	FieldVersion,
+	FieldPackageFields,
 	FieldTargetID,
 }
 

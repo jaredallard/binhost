@@ -23,6 +23,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/logger"
+	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib" // Used by ent.
 	"github.com/jaredallard/binhost/internal/config"
 	"github.com/jaredallard/binhost/internal/dpi"
@@ -53,7 +54,17 @@ func (s *Server) listTargets(c fiber.Ctx) error {
 		return fmt.Errorf("failed querying targets: %w", err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(targets)
+	type respType struct {
+		ID   uuid.UUID `json:"id"`
+		Name string    `json:"name"`
+	}
+
+	resp := make([]respType, 0, len(targets))
+	for _, t := range targets {
+		resp = append(resp, respType{ID: t.ID, Name: t.Name})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
 func (s *Server) createTarget(c fiber.Ctx) error {
@@ -90,24 +101,29 @@ func (s *Server) uploadPackage(c fiber.Ctx) error {
 	defer pkg.Delete()                  //nolint:errcheck // Why: Best effort delete.
 
 	// name suitable for logging
-	logName := pkg.Category + "/" + pkg.Name + "-" + pkg.Version + "::" + pkg.Repository
+	logName := pkg.Category + "/" + pkg.Name + "-" + pkg.Version + "::" + pkg.Repo
 
 	s.deps.Log.Info("uploading package", "package", logName, "target", t.Name)
 
 	if err := s.deps.DB.Pkg.Create().
 		SetName(pkg.Name).
 		SetCategory(pkg.Category).
-		SetRepository(pkg.Repository).
+		SetRepository(pkg.Repo).
 		SetTarget(t).
 		SetVersion(pkg.Version).
+		SetPackageFields(&pkg.PackageCommon).
 		Exec(c.Context()); err != nil {
+		if ent.IsConstraintError(err) {
+			return c.Status(fiber.StatusConflict).SendString("Package already exists")
+		}
+
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 
 	return c.SendStatus(fiber.StatusCreated)
 }
 
-func (s *Server) getPackage(c fiber.Ctx) error {
+func (s *Server) getPackages(c fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNotImplemented)
 }
 
@@ -132,10 +148,11 @@ func (a *Activity) Run(ctx context.Context) error {
 	app.Post("/v1/targets/:target/upload", a.srv.uploadPackage).Name("upload package")
 
 	// Gentoo Paths
-	app.Get("/t/:target/Packages", a.srv.getPackage)
+	app.Get("/t/:target/Packages", a.srv.getPackages)
 	app.Get("/t/:target/*", a.srv.getTargetPackageIndex)
 
-	return app.Listen(":8080", fiber.ListenConfig{
+	// TODO(jaredallard): Make this configurable later.
+	return app.Listen("127.0.0.1:8080", fiber.ListenConfig{
 		GracefulContext:       ctx,
 		DisableStartupMessage: a.cfg.LogLevel != "debug",
 		EnablePrintRoutes:     a.cfg.LogLevel == "debug",

@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jaredallard/binhost/internal/ent/pkg"
 	"github.com/jaredallard/binhost/internal/ent/target"
+	"github.com/jaredallard/binhost/internal/parser"
 )
 
 // PkgCreate is the builder for creating a Pkg entity.
@@ -42,6 +43,12 @@ func (pc *PkgCreate) SetName(s string) *PkgCreate {
 // SetVersion sets the "version" field.
 func (pc *PkgCreate) SetVersion(s string) *PkgCreate {
 	pc.mutation.SetVersion(s)
+	return pc
+}
+
+// SetPackageFields sets the "package_fields" field.
+func (pc *PkgCreate) SetPackageFields(value *parser.PackageCommon) *PkgCreate {
+	pc.mutation.SetPackageFields(value)
 	return pc
 }
 
@@ -125,6 +132,9 @@ func (pc *PkgCreate) check() error {
 	if _, ok := pc.mutation.Version(); !ok {
 		return &ValidationError{Name: "version", err: errors.New(`ent: missing required field "Pkg.version"`)}
 	}
+	if _, ok := pc.mutation.PackageFields(); !ok {
+		return &ValidationError{Name: "package_fields", err: errors.New(`ent: missing required field "Pkg.package_fields"`)}
+	}
 	if _, ok := pc.mutation.TargetID(); !ok {
 		return &ValidationError{Name: "target_id", err: errors.New(`ent: missing required field "Pkg.target_id"`)}
 	}
@@ -181,6 +191,10 @@ func (pc *PkgCreate) createSpec() (*Pkg, *sqlgraph.CreateSpec) {
 	if value, ok := pc.mutation.Version(); ok {
 		_spec.SetField(pkg.FieldVersion, field.TypeString, value)
 		_node.Version = value
+	}
+	if value, ok := pc.mutation.PackageFields(); ok {
+		_spec.SetField(pkg.FieldPackageFields, field.TypeJSON, value)
+		_node.PackageFields = value
 	}
 	if nodes := pc.mutation.TargetIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

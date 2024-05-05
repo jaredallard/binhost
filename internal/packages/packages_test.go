@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/jaredallard/binhost/internal/packages"
 	"gotest.tools/v3/assert"
 )
@@ -14,6 +15,8 @@ func TestCanParseGpkg(t *testing.T) {
 
 	pkg, err := packages.New(f)
 	assert.NilError(t, err)
+
+	spew.Dump(pkg)
 
 	// Check that one field is set. Maybe one day check them all (I'm
 	// lazy)

@@ -6,6 +6,7 @@ require (
 	entgo.io/ent v0.13.1
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/charmbracelet/log v0.4.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/gofiber/fiber/v3 v3.0.0-20240322111812-5e8df0a348be
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.5.5

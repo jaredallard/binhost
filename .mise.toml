@@ -10,6 +10,8 @@ goreleaser = "latest"
 
 [tasks.build]
 description = "Build a binary for the current platform/architecture"
+sources = ["cmd/**/*.go", "internal/**/*.go", "go.mod", "go.sum"]
+outputs = ["./bin/binhost"]
 run = "go build -trimpath -o ./bin/ -v ./cmd/..."
 
 [tasks.test]
@@ -31,5 +33,12 @@ run = [
 ]
 
 ## <<Stencil::Block(custom)>>
+[tasks.dev]
+description = "Live reload target (use with `mise run watch`)"
+depends = ["build"]
+run = ["ENV=development ./bin/binhost"]
 
+[tasks.watch]
+description = "Watch for changes"
+run = ["mise watch -t dev --clear --restart"]
 ## <</Stencil::Block>>
