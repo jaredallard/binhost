@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	entgo.io/ent v0.13.1
-	github.com/caarlos0/env/v10 v10.0.0
+	github.com/caarlos0/env/v11 v11.3.1
 	github.com/charmbracelet/log v0.4.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gofiber/fiber/v3 v3.0.0-beta.3
