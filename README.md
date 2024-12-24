@@ -6,6 +6,7 @@ targets.
 ## Table of Contents
 
 <!-- toc -->
+
 - [API](#api)
   - [<code>POST /v1/upload</code>](#post-v1upload)
   - [<code>GET /v1/targets</code>](#get-v1targets)
