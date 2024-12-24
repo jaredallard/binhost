@@ -1,9 +1,11 @@
 module github.com/jaredallard/binhost
 
-go 1.22
+go 1.23.0
+
+toolchain go1.23.4
 
 require (
-	entgo.io/ent v0.13.1
+	entgo.io/ent v0.14.1
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/charmbracelet/log v0.4.0
 	github.com/davecgh/go-spew v1.1.1
@@ -53,7 +55,7 @@ require (
 	github.com/zclconf/go-cty v1.8.0 // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
-	golang.org/x/mod v0.17.0 // indirect
+	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect

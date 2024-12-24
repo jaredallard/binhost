@@ -151,7 +151,7 @@ func (pu *PkgUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (pu *PkgUpdate) check() error {
-	if _, ok := pu.mutation.TargetID(); pu.mutation.TargetCleared() && !ok {
+	if pu.mutation.TargetCleared() && len(pu.mutation.TargetIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Pkg.target"`)
 	}
 	return nil
@@ -367,7 +367,7 @@ func (puo *PkgUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (puo *PkgUpdateOne) check() error {
-	if _, ok := puo.mutation.TargetID(); puo.mutation.TargetCleared() && !ok {
+	if puo.mutation.TargetCleared() && len(puo.mutation.TargetIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Pkg.target"`)
 	}
 	return nil

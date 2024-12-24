@@ -138,7 +138,7 @@ func (pc *PkgCreate) check() error {
 	if _, ok := pc.mutation.TargetID(); !ok {
 		return &ValidationError{Name: "target_id", err: errors.New(`ent: missing required field "Pkg.target_id"`)}
 	}
-	if _, ok := pc.mutation.TargetID(); !ok {
+	if len(pc.mutation.TargetIDs()) == 0 {
 		return &ValidationError{Name: "target", err: errors.New(`ent: missing required edge "Pkg.target"`)}
 	}
 	return nil

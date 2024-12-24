@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -86,7 +87,7 @@ func (tq *TargetQuery) QueryPackages() *PkgQuery {
 // First returns the first Target entity from the query.
 // Returns a *NotFoundError when no Target was found.
 func (tq *TargetQuery) First(ctx context.Context) (*Target, error) {
-	nodes, err := tq.Limit(1).All(setContextOp(ctx, tq.ctx, "First"))
+	nodes, err := tq.Limit(1).All(setContextOp(ctx, tq.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +110,7 @@ func (tq *TargetQuery) FirstX(ctx context.Context) *Target {
 // Returns a *NotFoundError when no Target ID was found.
 func (tq *TargetQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = tq.Limit(1).IDs(setContextOp(ctx, tq.ctx, "FirstID")); err != nil {
+	if ids, err = tq.Limit(1).IDs(setContextOp(ctx, tq.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -132,7 +133,7 @@ func (tq *TargetQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Returns a *NotSingularError when more than one Target entity is found.
 // Returns a *NotFoundError when no Target entities are found.
 func (tq *TargetQuery) Only(ctx context.Context) (*Target, error) {
-	nodes, err := tq.Limit(2).All(setContextOp(ctx, tq.ctx, "Only"))
+	nodes, err := tq.Limit(2).All(setContextOp(ctx, tq.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +161,7 @@ func (tq *TargetQuery) OnlyX(ctx context.Context) *Target {
 // Returns a *NotFoundError when no entities are found.
 func (tq *TargetQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = tq.Limit(2).IDs(setContextOp(ctx, tq.ctx, "OnlyID")); err != nil {
+	if ids, err = tq.Limit(2).IDs(setContextOp(ctx, tq.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -185,7 +186,7 @@ func (tq *TargetQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 
 // All executes the query and returns a list of Targets.
 func (tq *TargetQuery) All(ctx context.Context) ([]*Target, error) {
-	ctx = setContextOp(ctx, tq.ctx, "All")
+	ctx = setContextOp(ctx, tq.ctx, ent.OpQueryAll)
 	if err := tq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -207,7 +208,7 @@ func (tq *TargetQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if tq.ctx.Unique == nil && tq.path != nil {
 		tq.Unique(true)
 	}
-	ctx = setContextOp(ctx, tq.ctx, "IDs")
+	ctx = setContextOp(ctx, tq.ctx, ent.OpQueryIDs)
 	if err = tq.Select(target.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -225,7 +226,7 @@ func (tq *TargetQuery) IDsX(ctx context.Context) []uuid.UUID {
 
 // Count returns the count of the given query.
 func (tq *TargetQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, tq.ctx, "Count")
+	ctx = setContextOp(ctx, tq.ctx, ent.OpQueryCount)
 	if err := tq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -243,7 +244,7 @@ func (tq *TargetQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (tq *TargetQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, tq.ctx, "Exist")
+	ctx = setContextOp(ctx, tq.ctx, ent.OpQueryExist)
 	switch _, err := tq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -529,7 +530,7 @@ func (tgb *TargetGroupBy) Aggregate(fns ...AggregateFunc) *TargetGroupBy {
 
 // Scan applies the selector query and scans the result into the given value.
 func (tgb *TargetGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, tgb.build.ctx, "GroupBy")
+	ctx = setContextOp(ctx, tgb.build.ctx, ent.OpQueryGroupBy)
 	if err := tgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -577,7 +578,7 @@ func (ts *TargetSelect) Aggregate(fns ...AggregateFunc) *TargetSelect {
 
 // Scan applies the selector query and scans the result into the given value.
 func (ts *TargetSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, ts.ctx, "Select")
+	ctx = setContextOp(ctx, ts.ctx, ent.OpQuerySelect)
 	if err := ts.prepareQuery(ctx); err != nil {
 		return err
 	}
