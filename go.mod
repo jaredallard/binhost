@@ -14,7 +14,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/jamespfennell/xz v0.1.2
 	github.com/joho/godotenv v1.5.1
-	github.com/minio/minio-go/v7 v7.0.84
+	github.com/minio/minio-go/v7 v7.0.85
 	gotest.tools/v3 v3.5.1
 )
 
