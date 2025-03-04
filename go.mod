@@ -2,7 +2,7 @@ module github.com/jaredallard/binhost
 
 go 1.23.0
 
-toolchain go1.23.5
+toolchain go1.24.1
 
 require (
 	entgo.io/ent v0.14.3
