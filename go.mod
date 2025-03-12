@@ -7,7 +7,7 @@ toolchain go1.23.5
 require (
 	entgo.io/ent v0.14.3
 	github.com/caarlos0/env/v11 v11.3.1
-	github.com/charmbracelet/log v0.4.0
+	github.com/charmbracelet/log v0.4.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gofiber/fiber/v3 v3.0.0-beta.4
 	github.com/google/uuid v1.6.0
@@ -26,7 +26,8 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
-	github.com/charmbracelet/lipgloss v0.10.0 // indirect
+	github.com/charmbracelet/lipgloss v1.0.0 // indirect
+	github.com/charmbracelet/x/ansi v0.4.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
@@ -45,12 +46,10 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/minio/crc64nvme v1.0.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
 	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
-	github.com/muesli/reflow v0.3.0 // indirect
-	github.com/muesli/termenv v0.15.2 // indirect
+	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/philhofer/fwd v1.1.3-0.20240916144458-20a13a1f6b7c // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
