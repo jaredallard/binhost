@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.5
 
 require (
-	entgo.io/ent v0.14.3
+	entgo.io/ent v0.14.4
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/charmbracelet/log v0.4.1
 	github.com/davecgh/go-spew v1.1.1
